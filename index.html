@@ -9,9 +9,7 @@
 </head>
 
 <body>
-  <canvas id="simulationCanvas"></canvas>
-
-  <section class="panel" aria-label="Параметры симуляции">
+  <aside class="panel" aria-label="Параметры симуляции">
     <div class="panel__title">Народные тропы</div>
 
     <label class="control">
@@ -41,7 +39,11 @@
       <div><dt>FPS</dt><dd id="fpsValue">0</dd></div>
       <div><dt>Активно</dt><dd id="activeAgentsValue">0</dd></div>
     </dl>
-  </section>
+  </aside>
+
+  <main class="simulation" aria-label="Симуляция народных троп">
+    <canvas id="simulationCanvas"></canvas>
+  </main>
 
   <script type="module" src="./main.js"></script>
 </body>
