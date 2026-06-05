@@ -1,5 +1,7 @@
 const canvas = document.getElementById("simulationCanvas");
 const ctx = canvas.getContext("2d", { alpha: false });
+const routeResolutionInput = document.getElementById("routeResolution");
+const routeResolutionValue = document.getElementById("routeResolutionValue");
 
 const waypoints = [
   { x: 0.16, y: 0.18 },
@@ -11,13 +13,14 @@ const waypoints = [
 
 const agents = [];
 const agentCount = 80;
-const routeGridWidth = 80;
+let routeResolutionScale = Number(routeResolutionInput.value);
 let previousTime = 0;
 let firstWaypointRoute = null;
 
 const costMapImage = new Image();
 costMapImage.src = "./assets/initial-cost-map.png";
 costMapImage.addEventListener("load", start);
+routeResolutionInput.addEventListener("input", updateRouteResolution);
 
 function initializeCanvas() {
   const devicePixelRatio = window.devicePixelRatio || 1;
@@ -31,6 +34,7 @@ function initializeCanvas() {
 
 function start() {
   initializeCanvas();
+  updateRouteResolutionLabel();
   firstWaypointRoute = calculateCoarseRoute(waypoints[0]);
 
   for (let i = 0; i < agentCount; i++) {
@@ -90,26 +94,39 @@ function updateAgents(deltaTime) {
   }
 }
 
+function updateRouteResolution() {
+  routeResolutionScale = Number(routeResolutionInput.value);
+  updateRouteResolutionLabel();
+  firstWaypointRoute = calculateCoarseRoute(waypoints[0]);
+}
+
+function updateRouteResolutionLabel() {
+  routeResolutionValue.textContent = `1:${routeResolutionScale}`;
+}
+
 function calculateCoarseRoute(targetWaypoint) {
-  const rect = canvas.getBoundingClientRect();
-  const width = routeGridWidth;
-  const height = Math.max(1, Math.round(width * rect.height / rect.width));
+  const width = Math.max(1, Math.round(canvas.width / routeResolutionScale));
+  const height = Math.max(1, Math.round(canvas.height / routeResolutionScale));
   const passability = readPassabilityGrid(width, height);
   const distance = new Float32Array(width * height);
   const visited = new Uint8Array(width * height);
+  const queue = new PriorityQueue();
 
   distance.fill(Infinity);
 
   const targetX = Math.max(0, Math.min(width - 1, Math.round(targetWaypoint.x * (width - 1))));
   const targetY = Math.max(0, Math.min(height - 1, Math.round(targetWaypoint.y * (height - 1))));
-  distance[targetY * width + targetX] = 0;
+  const targetIndex = targetY * width + targetX;
 
-  for (let i = 0; i < width * height; i++) {
-    const current = findNearestUnvisited(distance, visited);
-    if (current === -1) break;
+  distance[targetIndex] = 0;
+  queue.push(targetIndex, 0);
+
+  while (queue.length > 0) {
+    const current = queue.pop();
+    if (visited[current]) continue;
 
     visited[current] = 1;
-    relaxNeighbors(current, width, height, passability, distance);
+    relaxNeighbors(current, width, height, passability, distance, queue);
   }
 
   return { width, height, passability, distance };
@@ -134,22 +151,7 @@ function readPassabilityGrid(width, height) {
   return passability;
 }
 
-function findNearestUnvisited(distance, visited) {
-  let bestIndex = -1;
-  let bestDistance = Infinity;
-
-  for (let i = 0; i < distance.length; i++) {
-    if (visited[i]) continue;
-    if (distance[i] < bestDistance) {
-      bestDistance = distance[i];
-      bestIndex = i;
-    }
-  }
-
-  return bestIndex;
-}
-
-function relaxNeighbors(index, width, height, passability, distance) {
+function relaxNeighbors(index, width, height, passability, distance, queue) {
   const x = index % width;
   const y = Math.floor(index / width);
 
@@ -170,6 +172,7 @@ function relaxNeighbors(index, width, height, passability, distance) {
 
       if (nextDistance < distance[nextIndex]) {
         distance[nextIndex] = nextDistance;
+        queue.push(nextIndex, nextDistance);
       }
     }
   }
@@ -179,7 +182,7 @@ function routeStepCost(currentPassability, nextPassability, stepLength) {
   const pathPassability = Math.min(currentPassability, nextPassability);
   if (pathPassability === 0) return Infinity;
 
-  return stepLength / (pathPassability * pathPassability);
+  return stepLength / (Math.pow(pathPassability, 4));
 }
 
 function drawScene() {
@@ -214,12 +217,12 @@ function drawCoarseRouteMapDebug(width, height) {
       const centerY = (y + 0.5) * cellHeight;
       const radius = Math.min(cellWidth, cellHeight) * 0.42;
 
-      ctx.fillStyle = `rgba(0, 208, 132, ${0.08 + closeness * 0.38})`;
+      ctx.fillStyle = `rgba(0, 0, ${255 - distance}, 0.9)`;
       ctx.beginPath();
       ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
       ctx.fill();
 
-      ctx.fillStyle = "rgba(255, 255, 255, 0.72)";
+      ctx.fillStyle = "rgba(255, 255, 255, 0)";
       ctx.fillText(String(Math.round(distance)), centerX, centerY);
     }
   }
@@ -260,5 +263,70 @@ function drawAgents(width, height) {
     ctx.beginPath();
     ctx.arc(agent.x * width, agent.y * height, 3, 0, Math.PI * 2);
     ctx.fill();
+  }
+}
+
+
+class PriorityQueue {
+  constructor() {
+    this.items = [];
+  }
+
+  get length() {
+    return this.items.length;
+  }
+
+  push(index, priority) {
+    this.items.push({ index, priority });
+    this.bubbleUp(this.items.length - 1);
+  }
+
+  pop() {
+    const first = this.items[0];
+    const last = this.items.pop();
+
+    if (this.items.length > 0) {
+      this.items[0] = last;
+      this.sinkDown(0);
+    }
+
+    return first.index;
+  }
+
+  bubbleUp(index) {
+    while (index > 0) {
+      const parentIndex = Math.floor((index - 1) / 2);
+      if (this.items[parentIndex].priority <= this.items[index].priority) break;
+
+      this.swap(index, parentIndex);
+      index = parentIndex;
+    }
+  }
+
+  sinkDown(index) {
+    while (true) {
+      const leftIndex = index * 2 + 1;
+      const rightIndex = index * 2 + 2;
+      let smallestIndex = index;
+
+      if (leftIndex < this.items.length && this.items[leftIndex].priority < this.items[smallestIndex].priority) {
+        smallestIndex = leftIndex;
+      }
+
+      if (rightIndex < this.items.length && this.items[rightIndex].priority < this.items[smallestIndex].priority) {
+        smallestIndex = rightIndex;
+      }
+
+      if (smallestIndex === index) break;
+
+      this.swap(index, smallestIndex);
+      index = smallestIndex;
+    }
+  }
+
+  swap(a, b) {
+    const item = this.items[a];
+    this.items[a] = this.items[b];
+    this.items[b] = item;
   }
 }
