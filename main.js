@@ -198,6 +198,10 @@ function drawCoarseRouteMapDebug(width, height) {
   const cellWidth = width / firstWaypointRoute.width;
   const cellHeight = height / firstWaypointRoute.height;
 
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.font = "8px system-ui, sans-serif";
+
   for (let y = 0; y < firstWaypointRoute.height; y++) {
     for (let x = 0; x < firstWaypointRoute.width; x++) {
       const index = y * firstWaypointRoute.width + x;
@@ -206,11 +210,17 @@ function drawCoarseRouteMapDebug(width, height) {
       if (!Number.isFinite(distance)) continue;
 
       const closeness = 1 - distance / maxDistance;
+      const centerX = (x + 0.5) * cellWidth;
+      const centerY = (y + 0.5) * cellHeight;
       const radius = Math.min(cellWidth, cellHeight) * 0.42;
+
       ctx.fillStyle = `rgba(0, 208, 132, ${0.08 + closeness * 0.38})`;
       ctx.beginPath();
-      ctx.arc((x + 0.5) * cellWidth, (y + 0.5) * cellHeight, radius, 0, Math.PI * 2);
+      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
       ctx.fill();
+
+      ctx.fillStyle = "rgba(255, 255, 255, 0.72)";
+      ctx.fillText(String(Math.round(distance)), centerX, centerY);
     }
   }
 }
