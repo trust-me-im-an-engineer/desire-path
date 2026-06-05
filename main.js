@@ -95,19 +95,30 @@ function updateAgents(deltaTime) {
   for (let i = 0; i < agents.length; i++) {
     const agent = agents[i];
     const target = waypoints[agent.targetIndex];
-    const direction = findCoarseRouteDirection(agent);
+    const desiredDirection = findCoarseRouteDirection(agent);
 
     if (Math.hypot(target.x - agent.x, target.y - agent.y) < 0.01) {
       agent.targetIndex = nextTargetIndex(agent.targetIndex);
       continue;
     }
 
+    blendAgentDirection(agent, desiredDirection, deltaTime);
+
     const step = agent.speed * deltaTime;
-    agent.vx = direction.x;
-    agent.vy = direction.y;
     agent.x += agent.vx * step;
     agent.y += agent.vy * step;
   }
+}
+
+function blendAgentDirection(agent, desiredDirection, deltaTime) {
+  const turnRate = 12 / (1 + turnSmoothness);
+  const turnBlend = 1 - Math.exp(-turnRate * deltaTime);
+  const vx = agent.vx + (desiredDirection.x - agent.vx) * turnBlend;
+  const vy = agent.vy + (desiredDirection.y - agent.vy) * turnBlend;
+  const length = Math.hypot(vx, vy) || 1;
+
+  agent.vx = vx / length;
+  agent.vy = vy / length;
 }
 
 function findCoarseRouteDirection(agent) {
@@ -140,8 +151,7 @@ function findCoarseRouteDirection(agent) {
 
       const nx = dx / length;
       const ny = dy / length;
-      const turnPenalty = 1 - (agent.vx * nx + agent.vy * ny);
-      const weight = improvement / ((1 + length) * (1 + turnPenalty * turnSmoothness));
+      const weight = improvement / (1 + length);
 
       directionX += nx * weight;
       directionY += ny * weight;
