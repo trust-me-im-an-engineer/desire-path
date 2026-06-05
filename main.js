@@ -17,6 +17,9 @@ const waypoints = [
 ];
 
 const agents = [];
+const wanderStrength = 0.18;
+const wanderChangeRate = 0.7;
+const wanderBlendRate = 1.5;
 let agentCount = Number(agentCountInput.value);
 let turnSmoothness = Number(turnSmoothnessInput.value);
 let routeResolutionScale = Number(routeResolutionInput.value);
@@ -82,6 +85,10 @@ function createAgent() {
     y: origin.y,
     vx: dx / distance,
     vy: dy / distance,
+    wanderX: 0,
+    wanderY: 0,
+    targetWanderX: 0,
+    targetWanderY: 0,
     targetIndex,
     speed: 0.045 + Math.random() * 0.035,
   };
@@ -102,7 +109,8 @@ function updateAgents(deltaTime) {
       continue;
     }
 
-    blendAgentDirection(agent, desiredDirection, deltaTime);
+    updateAgentWander(agent, deltaTime);
+    blendAgentDirection(agent, applyAgentWander(agent, desiredDirection), deltaTime);
 
     const step = agent.speed * deltaTime;
     agent.x += agent.vx * step;
@@ -119,6 +127,30 @@ function blendAgentDirection(agent, desiredDirection, deltaTime) {
 
   agent.vx = vx / length;
   agent.vy = vy / length;
+}
+
+function updateAgentWander(agent, deltaTime) {
+  if (Math.random() < wanderChangeRate * deltaTime) {
+    const angle = Math.random() * Math.PI * 2;
+    const strength = Math.random() * wanderStrength;
+    agent.targetWanderX = Math.cos(angle) * strength;
+    agent.targetWanderY = Math.sin(angle) * strength;
+  }
+
+  const blend = 1 - Math.exp(-wanderBlendRate * deltaTime);
+  agent.wanderX += (agent.targetWanderX - agent.wanderX) * blend;
+  agent.wanderY += (agent.targetWanderY - agent.wanderY) * blend;
+}
+
+function applyAgentWander(agent, direction) {
+  const x = direction.x + agent.wanderX;
+  const y = direction.y + agent.wanderY;
+  const length = Math.hypot(x, y) || 1;
+
+  return {
+    x: x / length,
+    y: y / length,
+  };
 }
 
 function findCoarseRouteDirection(agent) {
