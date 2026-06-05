@@ -334,7 +334,7 @@ function drawCoarseRouteMapDebug(width, height) {
       ctx.fill();
 
       ctx.fillStyle = "rgba(255, 255, 255, 0)";
-      ctx.fillText(distance.toFixed(1), centerX, centerY);
+      ctx.fillText(String(Math.round(distance)), centerX, centerY);
     }
   }
 }
