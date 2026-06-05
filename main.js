@@ -23,6 +23,9 @@ const waypoints = [
 ];
 
 const agents = [];
+const trailDepositRate = 0.018;
+const trailPassabilityBonus = 0.45;
+const routeRecalculateInterval = 0.5;
 let wanderStrength = Number(wanderStrengthInput.value);
 let wanderChangeRate = Number(wanderChangeRateInput.value);
 let wanderBlendRate = Number(wanderBlendRateInput.value);
@@ -30,7 +33,9 @@ let agentCount = Number(agentCountInput.value);
 let turnSmoothness = Number(turnSmoothnessInput.value);
 let routeResolutionScale = Number(routeResolutionInput.value);
 let previousTime = 0;
+let routeRecalculateTimer = 0;
 let routesByWaypoint = [];
+let trailGrid = null;
 let isRouteDebugVisible = routeDebugInput.checked;
 
 const costMapImage = new Image();
@@ -71,6 +76,7 @@ function tick(time) {
   previousTime = time;
 
   updateAgents(deltaTime);
+  updateRoutesAfterTrails(deltaTime);
   drawScene();
 
   requestAnimationFrame(tick);
@@ -126,6 +132,7 @@ function updateAgents(deltaTime) {
     const step = agent.speed * deltaTime;
     agent.x += agent.vx * step;
     agent.y += agent.vy * step;
+    depositAgentTrail(agent, deltaTime);
   }
 }
 
@@ -370,13 +377,55 @@ function syncAgentCount() {
 }
 
 function calculateRoutesByWaypoint() {
-  return waypoints.map(calculateCoarseRoute);
-}
-
-function calculateCoarseRoute(targetWaypoint) {
   const width = Math.max(1, Math.round(canvas.width / routeResolutionScale));
   const height = Math.max(1, Math.round(canvas.height / routeResolutionScale));
-  const passability = readPassabilityGrid(width, height);
+  const basePassability = readPassabilityGrid(width, height);
+  const passability = addTrailsToPassability(basePassability, width, height);
+
+  return waypoints.map((waypoint) => calculateCoarseRoute(waypoint, width, height, passability));
+}
+
+function addTrailsToPassability(basePassability, width, height) {
+  ensureTrailGrid(width, height);
+
+  const passability = new Float32Array(basePassability.length);
+  for (let i = 0; i < passability.length; i++) {
+    passability[i] = basePassability[i] === 0
+      ? 0
+      : Math.min(1, basePassability[i] + trailGrid.values[i] * trailPassabilityBonus);
+  }
+
+  return passability;
+}
+
+function ensureTrailGrid(width, height) {
+  if (trailGrid && trailGrid.width === width && trailGrid.height === height) return;
+
+  trailGrid = {
+    width,
+    height,
+    values: new Float32Array(width * height),
+  };
+}
+
+function depositAgentTrail(agent, deltaTime) {
+  if (!trailGrid) return;
+
+  const x = Math.max(0, Math.min(trailGrid.width - 1, Math.round(agent.x * (trailGrid.width - 1))));
+  const y = Math.max(0, Math.min(trailGrid.height - 1, Math.round(agent.y * (trailGrid.height - 1))));
+  const index = y * trailGrid.width + x;
+  trailGrid.values[index] = Math.min(1, trailGrid.values[index] + trailDepositRate * deltaTime);
+}
+
+function updateRoutesAfterTrails(deltaTime) {
+  routeRecalculateTimer += deltaTime;
+  if (routeRecalculateTimer < routeRecalculateInterval) return;
+
+  routeRecalculateTimer = 0;
+  routesByWaypoint = calculateRoutesByWaypoint();
+}
+
+function calculateCoarseRoute(targetWaypoint, width, height, passability) {
   const distance = new Float32Array(width * height);
   const visited = new Uint8Array(width * height);
   const queue = new PriorityQueue();
@@ -458,9 +507,30 @@ function drawScene() {
   const rect = canvas.getBoundingClientRect();
 
   ctx.drawImage(costMapImage, 0, 0, rect.width, rect.height);
+  drawTrailDebug(rect.width, rect.height);
   if (isRouteDebugVisible) drawCoarseRouteMapDebug(rect.width, rect.height);
   drawWaypoints(rect.width, rect.height);
   drawAgents(rect.width, rect.height);
+}
+
+function drawTrailDebug(width, height) {
+  if (!trailGrid) return;
+
+  const cellWidth = width / trailGrid.width;
+  const cellHeight = height / trailGrid.height;
+
+  ctx.fillStyle = "rgba(255, 255, 255, 0.28)";
+  for (let y = 0; y < trailGrid.height; y++) {
+    for (let x = 0; x < trailGrid.width; x++) {
+      const value = trailGrid.values[y * trailGrid.width + x];
+      if (value <= 0) continue;
+
+      ctx.globalAlpha = Math.min(0.45, value);
+      ctx.fillRect(x * cellWidth, y * cellHeight, cellWidth, cellHeight);
+    }
+  }
+
+  ctx.globalAlpha = 1;
 }
 
 function drawCoarseRouteMapDebug(width, height) {
