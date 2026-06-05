@@ -2,6 +2,9 @@ const canvas = document.getElementById("simulationCanvas");
 const ctx = canvas.getContext("2d", { alpha: false });
 const routeResolutionInput = document.getElementById("routeResolution");
 const routeResolutionValue = document.getElementById("routeResolutionValue");
+const agentCountInput = document.getElementById("agentCount");
+const agentCountValue = document.getElementById("agentCountValue");
+const routeDebugInput = document.getElementById("routeDebug");
 
 const waypoints = [
   { x: 0.16, y: 0.18 },
@@ -12,15 +15,18 @@ const waypoints = [
 ];
 
 const agents = [];
-const agentCount = 80;
+let agentCount = Number(agentCountInput.value);
 let routeResolutionScale = Number(routeResolutionInput.value);
 let previousTime = 0;
-let firstWaypointRoute = null;
+let routesByWaypoint = [];
+let isRouteDebugVisible = routeDebugInput.checked;
 
 const costMapImage = new Image();
 costMapImage.src = "./assets/initial-cost-map.png";
 costMapImage.addEventListener("load", start);
 routeResolutionInput.addEventListener("input", updateRouteResolution);
+agentCountInput.addEventListener("input", updateAgentCount);
+routeDebugInput.addEventListener("input", updateRouteDebug);
 
 function initializeCanvas() {
   const devicePixelRatio = window.devicePixelRatio || 1;
@@ -35,11 +41,9 @@ function initializeCanvas() {
 function start() {
   initializeCanvas();
   updateRouteResolutionLabel();
-  firstWaypointRoute = calculateCoarseRoute(waypoints[0]);
-
-  for (let i = 0; i < agentCount; i++) {
-    agents.push(createAgent());
-  }
+  updateAgentCountLabel();
+  routesByWaypoint = calculateRoutesByWaypoint();
+  syncAgentCount();
 
   requestAnimationFrame(tick);
 }
@@ -79,14 +83,17 @@ function updateAgents(deltaTime) {
   for (let i = 0; i < agents.length; i++) {
     const agent = agents[i];
     const target = waypoints[agent.targetIndex];
-    const dx = target.x - agent.x;
-    const dy = target.y - agent.y;
+    const direction = findCoarseRouteDirection(agent);
+    const dx = direction.x - agent.x;
+    const dy = direction.y - agent.y;
     const distance = Math.hypot(dx, dy);
 
-    if (distance < 0.01) {
-      agents[i] = createAgent();
+    if (Math.hypot(target.x - agent.x, target.y - agent.y) < 0.01) {
+      agent.targetIndex = nextTargetIndex(agent.targetIndex);
       continue;
     }
+
+    if (distance === 0) continue;
 
     const step = Math.min(distance, agent.speed * deltaTime);
     agent.x += (dx / distance) * step;
@@ -94,14 +101,83 @@ function updateAgents(deltaTime) {
   }
 }
 
+function findCoarseRouteDirection(agent) {
+  const route = routesByWaypoint[agent.targetIndex];
+  if (!route) return waypoints[agent.targetIndex];
+
+  const x = Math.max(0, Math.min(route.width - 1, Math.round(agent.x * (route.width - 1))));
+  const y = Math.max(0, Math.min(route.height - 1, Math.round(agent.y * (route.height - 1))));
+  let bestX = x;
+  let bestY = y;
+  let bestDistance = route.distance[y * route.width + x];
+
+  for (let oy = -1; oy <= 1; oy++) {
+    for (let ox = -1; ox <= 1; ox++) {
+      const nx = x + ox;
+      const ny = y + oy;
+      if (nx < 0 || nx >= route.width || ny < 0 || ny >= route.height) continue;
+
+      const distance = route.distance[ny * route.width + nx];
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        bestX = nx;
+        bestY = ny;
+      }
+    }
+  }
+
+  if (!Number.isFinite(bestDistance) || bestDistance === 0) return waypoints[agent.targetIndex];
+
+  return {
+    x: (bestX + 0.5) / route.width,
+    y: (bestY + 0.5) / route.height,
+  };
+}
+
+function nextTargetIndex(currentTargetIndex) {
+  let targetIndex = randomWaypointIndex();
+
+  while (targetIndex === currentTargetIndex) {
+    targetIndex = randomWaypointIndex();
+  }
+
+  return targetIndex;
+}
+
 function updateRouteResolution() {
   routeResolutionScale = Number(routeResolutionInput.value);
   updateRouteResolutionLabel();
-  firstWaypointRoute = calculateCoarseRoute(waypoints[0]);
+  routesByWaypoint = calculateRoutesByWaypoint();
 }
 
 function updateRouteResolutionLabel() {
   routeResolutionValue.textContent = `1:${routeResolutionScale}`;
+}
+
+function updateAgentCount() {
+  agentCount = Number(agentCountInput.value);
+  updateAgentCountLabel();
+  syncAgentCount();
+}
+
+function updateAgentCountLabel() {
+  agentCountValue.textContent = String(agentCount);
+}
+
+function updateRouteDebug() {
+  isRouteDebugVisible = routeDebugInput.checked;
+}
+
+function syncAgentCount() {
+  while (agents.length < agentCount) {
+    agents.push(createAgent());
+  }
+
+  agents.length = agentCount;
+}
+
+function calculateRoutesByWaypoint() {
+  return waypoints.map(calculateCoarseRoute);
 }
 
 function calculateCoarseRoute(targetWaypoint) {
@@ -189,12 +265,13 @@ function drawScene() {
   const rect = canvas.getBoundingClientRect();
 
   ctx.drawImage(costMapImage, 0, 0, rect.width, rect.height);
-  drawCoarseRouteMapDebug(rect.width, rect.height);
+  if (isRouteDebugVisible) drawCoarseRouteMapDebug(rect.width, rect.height);
   drawWaypoints(rect.width, rect.height);
   drawAgents(rect.width, rect.height);
 }
 
 function drawCoarseRouteMapDebug(width, height) {
+  const firstWaypointRoute = routesByWaypoint[0];
   if (!firstWaypointRoute) return;
 
   const maxDistance = findMaxRouteDistance(firstWaypointRoute.distance);
