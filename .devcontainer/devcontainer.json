@@ -1,0 +1,38 @@
+{
+  "name": "${localWorkspaceFolderBasename}",
+  "image": "local/codex-dev-base:latest",
+
+  "features": {
+  },
+
+  "remoteUser": "vscode",
+  "updateRemoteUserUID": true,
+
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+
+  "runArgs": [
+    "--cap-drop=ALL",
+    "--security-opt=no-new-privileges",
+    "--security-opt=label=disable",
+    "--add-host=host.docker.internal:host-gateway"
+  ],
+
+  "remoteEnv": {
+    "CODEX_HOME": "/home/vscode/.codex",
+
+    "HTTP_PROXY": "http://host.docker.internal:10809",
+    "HTTPS_PROXY": "http://host.docker.internal:10809",
+    "ALL_PROXY": "http://host.docker.internal:10809",
+    "http_proxy": "http://host.docker.internal:10809",
+    "https_proxy": "http://host.docker.internal:10809",
+    "all_proxy": "http://host.docker.internal:10809",
+
+    "PATH": "/home/vscode/.npm-global/bin:${containerEnv:PATH}",
+    "SSH_AUTH_SOCK": "",
+    "GPG_AGENT_INFO": "",
+    "GIT_ASKPASS": "echo",
+    "VSCODE_GIT_ASKPASS_NODE": "",
+    "VSCODE_GIT_ASKPASS_MAIN": "",
+    "VSCODE_GIT_IPC_HANDLE": ""
+  },
+}

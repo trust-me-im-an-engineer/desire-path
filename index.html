@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Народные тропы</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+
+<body>
+  <canvas id="simulationCanvas"></canvas>
+
+  <section class="panel" aria-label="Параметры симуляции">
+    <div class="panel__title">Народные тропы</div>
+
+    <label class="control">
+      <span>Агенты</span>
+      <input id="agentCount" type="range" min="50" max="600" step="10" value="240">
+      <output id="agentCountValue">240</output>
+    </label>
+
+    <label class="control">
+      <span>Скорость</span>
+      <input id="simSpeed" type="range" min="0.25" max="4" step="0.25" value="1">
+      <output id="simSpeedValue">1.00</output>
+    </label>
+
+    <div class="toggles">
+      <label><input id="showAgents" type="checkbox" checked> Агенты</label>
+      <label><input id="showCostMap" type="checkbox" checked> Карта</label>
+      <label><input id="showTrace" type="checkbox" checked> Протоптанность</label>
+    </div>
+
+    <div class="buttons">
+      <button id="pauseButton" type="button">Пауза</button>
+      <button id="resetTraceButton" type="button">Сбросить след</button>
+    </div>
+
+    <dl class="stats">
+      <div><dt>FPS</dt><dd id="fpsValue">0</dd></div>
+      <div><dt>Активно</dt><dd id="activeAgentsValue">0</dd></div>
+    </dl>
+  </section>
+
+  <script type="module" src="./main.js"></script>
+</body>
+
+</html>
