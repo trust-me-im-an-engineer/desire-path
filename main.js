@@ -4,6 +4,8 @@ const routeResolutionInput = document.getElementById("routeResolution");
 const routeResolutionValue = document.getElementById("routeResolutionValue");
 const agentCountInput = document.getElementById("agentCount");
 const agentCountValue = document.getElementById("agentCountValue");
+const turnSmoothnessInput = document.getElementById("turnSmoothness");
+const turnSmoothnessValue = document.getElementById("turnSmoothnessValue");
 const routeDebugInput = document.getElementById("routeDebug");
 
 const waypoints = [
@@ -16,6 +18,7 @@ const waypoints = [
 
 const agents = [];
 let agentCount = Number(agentCountInput.value);
+let turnSmoothness = Number(turnSmoothnessInput.value);
 let routeResolutionScale = Number(routeResolutionInput.value);
 let previousTime = 0;
 let routesByWaypoint = [];
@@ -26,6 +29,7 @@ costMapImage.src = "./assets/initial-cost-map.png";
 costMapImage.addEventListener("load", start);
 routeResolutionInput.addEventListener("input", updateRouteResolution);
 agentCountInput.addEventListener("input", updateAgentCount);
+turnSmoothnessInput.addEventListener("input", updateTurnSmoothness);
 routeDebugInput.addEventListener("input", updateRouteDebug);
 
 function initializeCanvas() {
@@ -42,6 +46,7 @@ function start() {
   initializeCanvas();
   updateRouteResolutionLabel();
   updateAgentCountLabel();
+  updateTurnSmoothnessLabel();
   routesByWaypoint = calculateRoutesByWaypoint();
   syncAgentCount();
 
@@ -67,9 +72,16 @@ function createAgent() {
   }
 
   const origin = waypoints[originIndex];
+  const target = waypoints[targetIndex];
+  const dx = target.x - origin.x;
+  const dy = target.y - origin.y;
+  const distance = Math.hypot(dx, dy) || 1;
+
   return {
     x: origin.x,
     y: origin.y,
+    vx: dx / distance,
+    vy: dy / distance,
     targetIndex,
     speed: 0.045 + Math.random() * 0.035,
   };
@@ -96,8 +108,10 @@ function updateAgents(deltaTime) {
     if (distance === 0) continue;
 
     const step = Math.min(distance, agent.speed * deltaTime);
-    agent.x += (dx / distance) * step;
-    agent.y += (dy / distance) * step;
+    agent.vx = dx / distance;
+    agent.vy = dy / distance;
+    agent.x += agent.vx * step;
+    agent.y += agent.vy * step;
   }
 }
 
@@ -107,26 +121,37 @@ function findCoarseRouteDirection(agent) {
 
   const x = Math.max(0, Math.min(route.width - 1, Math.round(agent.x * (route.width - 1))));
   const y = Math.max(0, Math.min(route.height - 1, Math.round(agent.y * (route.height - 1))));
+  const currentDistance = route.distance[y * route.width + x];
   let bestX = x;
   let bestY = y;
-  let bestDistance = route.distance[y * route.width + x];
+  let bestScore = Infinity;
 
   for (let oy = -1; oy <= 1; oy++) {
     for (let ox = -1; ox <= 1; ox++) {
+      if (ox === 0 && oy === 0) continue;
+
       const nx = x + ox;
       const ny = y + oy;
       if (nx < 0 || nx >= route.width || ny < 0 || ny >= route.height) continue;
 
       const distance = route.distance[ny * route.width + nx];
-      if (distance < bestDistance) {
-        bestDistance = distance;
+      if (!Number.isFinite(distance) || distance >= currentDistance) continue;
+
+      const stepLength = Math.hypot(ox, oy);
+      const directionX = ox / stepLength;
+      const directionY = oy / stepLength;
+      const turnPenalty = 1 - (agent.vx * directionX + agent.vy * directionY);
+      const score = distance + turnPenalty * turnSmoothness;
+
+      if (score < bestScore) {
+        bestScore = score;
         bestX = nx;
         bestY = ny;
       }
     }
   }
 
-  if (!Number.isFinite(bestDistance) || bestDistance === 0) return waypoints[agent.targetIndex];
+  if (!Number.isFinite(bestScore) || currentDistance === 0) return waypoints[agent.targetIndex];
 
   return {
     x: (bestX + 0.5) / route.width,
@@ -162,6 +187,15 @@ function updateAgentCount() {
 
 function updateAgentCountLabel() {
   agentCountValue.textContent = String(agentCount);
+}
+
+function updateTurnSmoothness() {
+  turnSmoothness = Number(turnSmoothnessInput.value);
+  updateTurnSmoothnessLabel();
+}
+
+function updateTurnSmoothnessLabel() {
+  turnSmoothnessValue.textContent = String(turnSmoothness);
 }
 
 function updateRouteDebug() {
