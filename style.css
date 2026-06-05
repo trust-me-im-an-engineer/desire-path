@@ -20,7 +20,6 @@ body {
 body {
   display: grid;
   grid-template-columns: 320px minmax(0, 1fr);
-  background: #92ddab;
 }
 
 .panel {
@@ -136,33 +135,4 @@ button:hover {
 .stats dd {
   color: #f5f7ef;
   font-variant-numeric: tabular-nums;
-}
-
-@media (max-width: 760px) {
-  body {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto minmax(0, 1fr);
-  }
-
-  .panel {
-    grid-column: 1;
-    grid-row: 1;
-    width: 100%;
-    height: auto;
-    max-height: 42vh;
-    border-right: 0;
-    border-bottom: 1px solid rgba(238, 242, 232, 0.14);
-    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.22);
-  }
-
-  .simulation {
-    grid-column: 1;
-    grid-row: 2;
-    height: 100%;
-    min-height: 0;
-  }
-
-  canvas {
-    height: 100%;
-  }
 }
