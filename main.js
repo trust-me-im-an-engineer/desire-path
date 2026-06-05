@@ -11,7 +11,11 @@ const waypoints = [
 
 const agents = [];
 const agentCount = 80;
+const routeGridWidth = 80;
+const impassableThreshold = 0.08;
+
 let previousTime = 0;
+let firstWaypointRoute = null;
 
 const costMapImage = new Image();
 costMapImage.src = "./assets/initial-cost-map.png";
@@ -29,6 +33,7 @@ function initializeCanvas() {
 
 function start() {
   initializeCanvas();
+  firstWaypointRoute = calculateCoarseRoute(waypoints[0]);
 
   for (let i = 0; i < agentCount; i++) {
     agents.push(createAgent());
@@ -87,12 +92,165 @@ function updateAgents(deltaTime) {
   }
 }
 
+function calculateCoarseRoute(targetWaypoint) {
+  const rect = canvas.getBoundingClientRect();
+  const width = routeGridWidth;
+  const height = Math.max(1, Math.round(width * rect.height / rect.width));
+  const passability = readPassabilityGrid(width, height);
+  const distance = new Float32Array(width * height);
+  const visited = new Uint8Array(width * height);
+
+  distance.fill(Infinity);
+
+  const targetX = Math.max(0, Math.min(width - 1, Math.round(targetWaypoint.x * (width - 1))));
+  const targetY = Math.max(0, Math.min(height - 1, Math.round(targetWaypoint.y * (height - 1))));
+  distance[targetY * width + targetX] = 0;
+
+  for (let i = 0; i < width * height; i++) {
+    const current = findNearestUnvisited(distance, visited, passability);
+    if (current === -1) break;
+
+    visited[current] = 1;
+    relaxNeighbors(current, width, height, passability, distance);
+  }
+
+  return { width, height, passability, distance };
+}
+
+function readPassabilityGrid(width, height) {
+  const mapCanvas = document.createElement("canvas");
+  const mapCtx = mapCanvas.getContext("2d", { alpha: false });
+
+  mapCanvas.width = width;
+  mapCanvas.height = height;
+  mapCtx.drawImage(costMapImage, 0, 0, width, height);
+
+  const pixels = mapCtx.getImageData(0, 0, width, height).data;
+  const passability = new Float32Array(width * height);
+
+  for (let i = 0; i < passability.length; i++) {
+    const offset = i * 4;
+    passability[i] = (pixels[offset] + pixels[offset + 1] + pixels[offset + 2]) / (255 * 3);
+  }
+
+  return passability;
+}
+
+function findNearestUnvisited(distance, visited, passability) {
+  let bestIndex = -1;
+  let bestDistance = Infinity;
+
+  for (let i = 0; i < distance.length; i++) {
+    if (visited[i] || passability[i] <= impassableThreshold) continue;
+    if (distance[i] < bestDistance) {
+      bestDistance = distance[i];
+      bestIndex = i;
+    }
+  }
+
+  return bestIndex;
+}
+
+function relaxNeighbors(index, width, height, passability, distance) {
+  const x = index % width;
+  const y = Math.floor(index / width);
+
+  for (let oy = -1; oy <= 1; oy++) {
+    for (let ox = -1; ox <= 1; ox++) {
+      if (ox === 0 && oy === 0) continue;
+
+      const nx = x + ox;
+      const ny = y + oy;
+      if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
+
+      const nextIndex = ny * width + nx;
+      const nextPassability = passability[nextIndex];
+      if (nextPassability <= impassableThreshold) continue;
+
+      const stepLength = Math.hypot(ox, oy);
+      const stepCost = stepLength / Math.max(nextPassability, 0.001);
+      const nextDistance = distance[index] + stepCost;
+
+      if (nextDistance < distance[nextIndex]) {
+        distance[nextIndex] = nextDistance;
+      }
+    }
+  }
+}
+
 function drawScene() {
   const rect = canvas.getBoundingClientRect();
 
   ctx.drawImage(costMapImage, 0, 0, rect.width, rect.height);
+  drawCoarseRouteDebug(rect.width, rect.height);
   drawWaypoints(rect.width, rect.height);
   drawAgents(rect.width, rect.height);
+}
+
+function drawCoarseRouteDebug(width, height) {
+  if (!firstWaypointRoute) return;
+
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = "#00d084";
+
+  for (let i = 1; i < waypoints.length; i++) {
+    const path = traceCoarseRoute(waypoints[i], firstWaypointRoute);
+    if (path.length < 2) continue;
+
+    ctx.beginPath();
+    ctx.moveTo(path[0].x * width, path[0].y * height);
+
+    for (let j = 1; j < path.length; j++) {
+      ctx.lineTo(path[j].x * width, path[j].y * height);
+    }
+
+    ctx.stroke();
+  }
+}
+
+function traceCoarseRoute(origin, route) {
+  const path = [];
+  let x = Math.max(0, Math.min(route.width - 1, Math.round(origin.x * (route.width - 1))));
+  let y = Math.max(0, Math.min(route.height - 1, Math.round(origin.y * (route.height - 1))));
+
+  for (let step = 0; step < route.width + route.height; step++) {
+    path.push({
+      x: x / (route.width - 1),
+      y: y / (route.height - 1),
+    });
+
+    const next = findBestRouteNeighbor(x, y, route);
+    if (!next) break;
+
+    x = next.x;
+    y = next.y;
+  }
+
+  return path;
+}
+
+function findBestRouteNeighbor(x, y, route) {
+  const currentIndex = y * route.width + x;
+  let best = null;
+  let bestDistance = route.distance[currentIndex];
+
+  for (let oy = -1; oy <= 1; oy++) {
+    for (let ox = -1; ox <= 1; ox++) {
+      if (ox === 0 && oy === 0) continue;
+
+      const nx = x + ox;
+      const ny = y + oy;
+      if (nx < 0 || nx >= route.width || ny < 0 || ny >= route.height) continue;
+
+      const index = ny * route.width + nx;
+      if (route.distance[index] < bestDistance) {
+        bestDistance = route.distance[index];
+        best = { x: nx, y: ny };
+      }
+    }
+  }
+
+  return best;
 }
 
 function drawWaypoints(width, height) {
