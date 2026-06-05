@@ -121,6 +121,7 @@ function updateAgents(deltaTime) {
 
     updateAgentWander(agent, deltaTime);
     blendAgentDirection(agent, applyAgentWander(agent, desiredDirection), deltaTime);
+    avoidImpassableStep(agent, agent.speed * deltaTime);
 
     const step = agent.speed * deltaTime;
     agent.x += agent.vx * step;
@@ -153,14 +154,48 @@ function updateAgentWander(agent, deltaTime) {
 }
 
 function applyAgentWander(agent, direction) {
-  const x = direction.x + agent.wanderX;
-  const y = direction.y + agent.wanderY;
+  const route = routesByWaypoint[agent.targetIndex];
+  const candidateX = direction.x + agent.wanderX;
+  const candidateY = direction.y + agent.wanderY;
+  const candidateLength = Math.hypot(candidateX, candidateY) || 1;
+  const candidateDirection = {
+    x: candidateX / candidateLength,
+    y: candidateY / candidateLength,
+  };
+  const wanderScale = route ? sampleForwardPassability(route, agent, candidateDirection) : 1;
+  const x = direction.x + agent.wanderX * wanderScale;
+  const y = direction.y + agent.wanderY * wanderScale;
   const length = Math.hypot(x, y) || 1;
 
   return {
     x: x / length,
     y: y / length,
   };
+}
+
+function sampleForwardPassability(route, agent, direction) {
+  const lookAhead = 1 / Math.min(route.width, route.height);
+  const x = (agent.x + direction.x * lookAhead) * route.width - 0.5;
+  const y = (agent.y + direction.y * lookAhead) * route.height - 0.5;
+
+  return Math.pow(samplePassability(route, x, y), 2);
+}
+
+function avoidImpassableStep(agent, step) {
+  const route = routesByWaypoint[agent.targetIndex];
+  if (!route) return;
+
+  const x = (agent.x + agent.vx * step) * route.width - 0.5;
+  const y = (agent.y + agent.vy * step) * route.height - 0.5;
+  if (samplePassability(route, x, y) > 0) return;
+
+  const direction = findCoarseRouteDirection(agent);
+  agent.vx = direction.x;
+  agent.vy = direction.y;
+  agent.wanderX = 0;
+  agent.wanderY = 0;
+  agent.targetWanderX = 0;
+  agent.targetWanderY = 0;
 }
 
 function findCoarseRouteDirection(agent) {
@@ -224,6 +259,23 @@ function sampleRouteDistance(route, x, y) {
     { x: x0, y: y1, weight: (1 - tx) * ty },
     { x: x1, y: y1, weight: tx * ty },
   ]);
+}
+
+function samplePassability(route, x, y) {
+  const x0 = Math.max(0, Math.min(route.width - 1, Math.floor(x)));
+  const y0 = Math.max(0, Math.min(route.height - 1, Math.floor(y)));
+  const x1 = Math.max(0, Math.min(route.width - 1, x0 + 1));
+  const y1 = Math.max(0, Math.min(route.height - 1, y0 + 1));
+  const tx = Math.max(0, Math.min(1, x - x0));
+  const ty = Math.max(0, Math.min(1, y - y0));
+  const top = interpolate(route.passability[y0 * route.width + x0], route.passability[y0 * route.width + x1], tx);
+  const bottom = interpolate(route.passability[y1 * route.width + x0], route.passability[y1 * route.width + x1], tx);
+
+  return interpolate(top, bottom, ty);
+}
+
+function interpolate(a, b, t) {
+  return a + (b - a) * t;
 }
 
 function weightedRouteDistance(route, samples) {
