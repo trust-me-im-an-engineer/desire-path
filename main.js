@@ -6,6 +6,12 @@ const agentCountInput = document.getElementById("agentCount");
 const agentCountValue = document.getElementById("agentCountValue");
 const turnSmoothnessInput = document.getElementById("turnSmoothness");
 const turnSmoothnessValue = document.getElementById("turnSmoothnessValue");
+const wanderStrengthInput = document.getElementById("wanderStrength");
+const wanderStrengthValue = document.getElementById("wanderStrengthValue");
+const wanderChangeRateInput = document.getElementById("wanderChangeRate");
+const wanderChangeRateValue = document.getElementById("wanderChangeRateValue");
+const wanderBlendRateInput = document.getElementById("wanderBlendRate");
+const wanderBlendRateValue = document.getElementById("wanderBlendRateValue");
 const routeDebugInput = document.getElementById("routeDebug");
 
 const waypoints = [
@@ -17,9 +23,9 @@ const waypoints = [
 ];
 
 const agents = [];
-const wanderStrength = 0.18;
-const wanderChangeRate = 0.7;
-const wanderBlendRate = 1.5;
+let wanderStrength = Number(wanderStrengthInput.value);
+let wanderChangeRate = Number(wanderChangeRateInput.value);
+let wanderBlendRate = Number(wanderBlendRateInput.value);
 let agentCount = Number(agentCountInput.value);
 let turnSmoothness = Number(turnSmoothnessInput.value);
 let routeResolutionScale = Number(routeResolutionInput.value);
@@ -33,6 +39,9 @@ costMapImage.addEventListener("load", start);
 routeResolutionInput.addEventListener("input", updateRouteResolution);
 agentCountInput.addEventListener("input", updateAgentCount);
 turnSmoothnessInput.addEventListener("input", updateTurnSmoothness);
+wanderStrengthInput.addEventListener("input", updateWanderSettings);
+wanderChangeRateInput.addEventListener("input", updateWanderSettings);
+wanderBlendRateInput.addEventListener("input", updateWanderSettings);
 routeDebugInput.addEventListener("input", updateRouteDebug);
 
 function initializeCanvas() {
@@ -50,6 +59,7 @@ function start() {
   updateRouteResolutionLabel();
   updateAgentCountLabel();
   updateTurnSmoothnessLabel();
+  updateWanderSettingsLabels();
   routesByWaypoint = calculateRoutesByWaypoint();
   syncAgentCount();
 
@@ -280,6 +290,19 @@ function updateTurnSmoothness() {
 
 function updateTurnSmoothnessLabel() {
   turnSmoothnessValue.textContent = String(turnSmoothness);
+}
+
+function updateWanderSettings() {
+  wanderStrength = Number(wanderStrengthInput.value);
+  wanderChangeRate = Number(wanderChangeRateInput.value);
+  wanderBlendRate = Number(wanderBlendRateInput.value);
+  updateWanderSettingsLabels();
+}
+
+function updateWanderSettingsLabels() {
+  wanderStrengthValue.textContent = String(wanderStrength);
+  wanderChangeRateValue.textContent = String(wanderChangeRate);
+  wanderBlendRateValue.textContent = String(wanderBlendRate);
 }
 
 function updateRouteDebug() {
