@@ -182,75 +182,42 @@ function drawScene() {
   const rect = canvas.getBoundingClientRect();
 
   ctx.drawImage(costMapImage, 0, 0, rect.width, rect.height);
-  drawCoarseRouteDebug(rect.width, rect.height);
+  drawCoarseRouteMapDebug(rect.width, rect.height);
   drawWaypoints(rect.width, rect.height);
   drawAgents(rect.width, rect.height);
 }
 
-function drawCoarseRouteDebug(width, height) {
+function drawCoarseRouteMapDebug(width, height) {
   if (!firstWaypointRoute) return;
 
-  ctx.lineWidth = 3;
-  ctx.strokeStyle = "#00d084";
+  const maxDistance = findMaxRouteDistance(firstWaypointRoute.distance);
+  const cellWidth = width / firstWaypointRoute.width;
+  const cellHeight = height / firstWaypointRoute.height;
 
-  for (let i = 1; i < waypoints.length; i++) {
-    const path = traceCoarseRoute(waypoints[i], firstWaypointRoute);
-    if (path.length < 2) continue;
+  for (let y = 0; y < firstWaypointRoute.height; y++) {
+    for (let x = 0; x < firstWaypointRoute.width; x++) {
+      const index = y * firstWaypointRoute.width + x;
+      const distance = firstWaypointRoute.distance[index];
 
-    ctx.beginPath();
-    ctx.moveTo(path[0].x * width, path[0].y * height);
+      if (!Number.isFinite(distance)) continue;
 
-    for (let j = 1; j < path.length; j++) {
-      ctx.lineTo(path[j].x * width, path[j].y * height);
+      const closeness = 1 - distance / maxDistance;
+      ctx.fillStyle = `rgba(0, 208, 132, ${0.08 + closeness * 0.38})`;
+      ctx.fillRect(x * cellWidth, y * cellHeight, cellWidth, cellHeight);
     }
-
-    ctx.stroke();
   }
 }
 
-function traceCoarseRoute(origin, route) {
-  const path = [];
-  let x = Math.max(0, Math.min(route.width - 1, Math.round(origin.x * (route.width - 1))));
-  let y = Math.max(0, Math.min(route.height - 1, Math.round(origin.y * (route.height - 1))));
+function findMaxRouteDistance(distance) {
+  let maxDistance = 0;
 
-  for (let step = 0; step < route.width + route.height; step++) {
-    path.push({
-      x: x / (route.width - 1),
-      y: y / (route.height - 1),
-    });
-
-    const next = findBestRouteNeighbor(x, y, route);
-    if (!next) break;
-
-    x = next.x;
-    y = next.y;
-  }
-
-  return path;
-}
-
-function findBestRouteNeighbor(x, y, route) {
-  const currentIndex = y * route.width + x;
-  let best = null;
-  let bestDistance = route.distance[currentIndex];
-
-  for (let oy = -1; oy <= 1; oy++) {
-    for (let ox = -1; ox <= 1; ox++) {
-      if (ox === 0 && oy === 0) continue;
-
-      const nx = x + ox;
-      const ny = y + oy;
-      if (nx < 0 || nx >= route.width || ny < 0 || ny >= route.height) continue;
-
-      const index = ny * route.width + nx;
-      if (route.distance[index] < bestDistance) {
-        bestDistance = route.distance[index];
-        best = { x: nx, y: ny };
-      }
+  for (const value of distance) {
+    if (Number.isFinite(value) && value > maxDistance) {
+      maxDistance = value;
     }
   }
 
-  return best;
+  return maxDistance || 1;
 }
 
 function drawWaypoints(width, height) {
