@@ -96,20 +96,15 @@ function updateAgents(deltaTime) {
     const agent = agents[i];
     const target = waypoints[agent.targetIndex];
     const direction = findCoarseRouteDirection(agent);
-    const dx = direction.x - agent.x;
-    const dy = direction.y - agent.y;
-    const distance = Math.hypot(dx, dy);
 
     if (Math.hypot(target.x - agent.x, target.y - agent.y) < 0.01) {
       agent.targetIndex = nextTargetIndex(agent.targetIndex);
       continue;
     }
 
-    if (distance === 0) continue;
-
-    const step = Math.min(distance, agent.speed * deltaTime);
-    agent.vx = dx / distance;
-    agent.vy = dy / distance;
+    const step = agent.speed * deltaTime;
+    agent.vx = direction.x;
+    agent.vy = direction.y;
     agent.x += agent.vx * step;
     agent.y += agent.vy * step;
   }
@@ -117,45 +112,92 @@ function updateAgents(deltaTime) {
 
 function findCoarseRouteDirection(agent) {
   const route = routesByWaypoint[agent.targetIndex];
-  if (!route) return waypoints[agent.targetIndex];
+  if (!route) return directionToWaypoint(agent);
 
-  const x = Math.max(0, Math.min(route.width - 1, Math.round(agent.x * (route.width - 1))));
-  const y = Math.max(0, Math.min(route.height - 1, Math.round(agent.y * (route.height - 1))));
-  const currentDistance = route.distance[y * route.width + x];
-  let bestX = x;
-  let bestY = y;
-  let bestScore = Infinity;
+  const gridX = agent.x * route.width - 0.5;
+  const gridY = agent.y * route.height - 0.5;
+  const currentDistance = sampleRouteDistance(route, gridX, gridY);
+  let directionX = 0;
+  let directionY = 0;
+  let totalWeight = 0;
 
-  for (let oy = -1; oy <= 1; oy++) {
-    for (let ox = -1; ox <= 1; ox++) {
-      if (ox === 0 && oy === 0) continue;
+  if (!Number.isFinite(currentDistance) || currentDistance === 0) {
+    return directionToWaypoint(agent);
+  }
 
-      const nx = x + ox;
-      const ny = y + oy;
-      if (nx < 0 || nx >= route.width || ny < 0 || ny >= route.height) continue;
+  for (let y = Math.floor(gridY) - 2; y <= Math.floor(gridY) + 2; y++) {
+    for (let x = Math.floor(gridX) - 2; x <= Math.floor(gridX) + 2; x++) {
+      if (x < 0 || x >= route.width || y < 0 || y >= route.height) continue;
 
-      const distance = route.distance[ny * route.width + nx];
-      if (!Number.isFinite(distance) || distance >= currentDistance) continue;
+      const distance = route.distance[y * route.width + x];
+      const improvement = currentDistance - distance;
+      if (!Number.isFinite(distance) || improvement <= 0) continue;
 
-      const stepLength = Math.hypot(ox, oy);
-      const directionX = ox / stepLength;
-      const directionY = oy / stepLength;
-      const turnPenalty = 1 - (agent.vx * directionX + agent.vy * directionY);
-      const score = distance + turnPenalty * turnSmoothness;
+      const dx = x - gridX;
+      const dy = y - gridY;
+      const length = Math.hypot(dx, dy);
+      if (length === 0) continue;
 
-      if (score < bestScore) {
-        bestScore = score;
-        bestX = nx;
-        bestY = ny;
-      }
+      const nx = dx / length;
+      const ny = dy / length;
+      const turnPenalty = 1 - (agent.vx * nx + agent.vy * ny);
+      const weight = improvement / ((1 + length) * (1 + turnPenalty * turnSmoothness));
+
+      directionX += nx * weight;
+      directionY += ny * weight;
+      totalWeight += weight;
     }
   }
 
-  if (!Number.isFinite(bestScore) || currentDistance === 0) return waypoints[agent.targetIndex];
+  if (totalWeight === 0) return directionToWaypoint(agent);
+
+  const length = Math.hypot(directionX, directionY) || 1;
+  return {
+    x: directionX / length,
+    y: directionY / length,
+  };
+}
+
+function sampleRouteDistance(route, x, y) {
+  const x0 = Math.max(0, Math.min(route.width - 1, Math.floor(x)));
+  const y0 = Math.max(0, Math.min(route.height - 1, Math.floor(y)));
+  const x1 = Math.max(0, Math.min(route.width - 1, x0 + 1));
+  const y1 = Math.max(0, Math.min(route.height - 1, y0 + 1));
+  const tx = Math.max(0, Math.min(1, x - x0));
+  const ty = Math.max(0, Math.min(1, y - y0));
+
+  return weightedRouteDistance(route, [
+    { x: x0, y: y0, weight: (1 - tx) * (1 - ty) },
+    { x: x1, y: y0, weight: tx * (1 - ty) },
+    { x: x0, y: y1, weight: (1 - tx) * ty },
+    { x: x1, y: y1, weight: tx * ty },
+  ]);
+}
+
+function weightedRouteDistance(route, samples) {
+  let distance = 0;
+  let weight = 0;
+
+  for (const sample of samples) {
+    const value = route.distance[sample.y * route.width + sample.x];
+    if (!Number.isFinite(value) || sample.weight === 0) continue;
+
+    distance += value * sample.weight;
+    weight += sample.weight;
+  }
+
+  return weight === 0 ? Infinity : distance / weight;
+}
+
+function directionToWaypoint(agent) {
+  const target = waypoints[agent.targetIndex];
+  const dx = target.x - agent.x;
+  const dy = target.y - agent.y;
+  const length = Math.hypot(dx, dy) || 1;
 
   return {
-    x: (bestX + 0.5) / route.width,
-    y: (bestY + 0.5) / route.height,
+    x: dx / length,
+    y: dy / length,
   };
 }
 
