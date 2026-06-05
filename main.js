@@ -25,7 +25,7 @@ const waypoints = [
 const agents = [];
 const trailDepositRate = 0.018;
 const trailPassabilityBonus = 0.45;
-const routeRecalculateInterval = 0.5;
+const routeRecalculateInterval = 1;
 let wanderStrength = Number(wanderStrengthInput.value);
 let wanderChangeRate = Number(wanderChangeRateInput.value);
 let wanderBlendRate = Number(wanderBlendRateInput.value);
@@ -34,6 +34,7 @@ let turnSmoothness = Number(turnSmoothnessInput.value);
 let routeResolutionScale = Number(routeResolutionInput.value);
 let previousTime = 0;
 let routeRecalculateTimer = 0;
+let routeRecalculateIndex = 0;
 let routesByWaypoint = [];
 let trailGrid = null;
 let isRouteDebugVisible = routeDebugInput.checked;
@@ -325,6 +326,8 @@ function nextTargetIndex(currentTargetIndex) {
 function updateRouteResolution() {
   routeResolutionScale = Number(routeResolutionInput.value);
   updateRouteResolutionLabel();
+  routeRecalculateIndex = 0;
+  routeRecalculateTimer = 0;
   routesByWaypoint = calculateRoutesByWaypoint();
 }
 
@@ -422,7 +425,24 @@ function updateRoutesAfterTrails(deltaTime) {
   if (routeRecalculateTimer < routeRecalculateInterval) return;
 
   routeRecalculateTimer = 0;
-  routesByWaypoint = calculateRoutesByWaypoint();
+  recalculateNextWaypointRoute();
+}
+
+function recalculateNextWaypointRoute() {
+  if (waypoints.length === 0) return;
+
+  const index = routeRecalculateIndex % waypoints.length;
+  routesByWaypoint[index] = calculateRouteForWaypoint(waypoints[index]);
+  routeRecalculateIndex = (index + 1) % waypoints.length;
+}
+
+function calculateRouteForWaypoint(waypoint) {
+  const width = Math.max(1, Math.round(canvas.width / routeResolutionScale));
+  const height = Math.max(1, Math.round(canvas.height / routeResolutionScale));
+  const basePassability = readPassabilityGrid(width, height);
+  const passability = addTrailsToPassability(basePassability, width, height);
+
+  return calculateCoarseRoute(waypoint, width, height, passability);
 }
 
 function calculateCoarseRoute(targetWaypoint, width, height, passability) {
