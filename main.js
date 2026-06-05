@@ -12,8 +12,6 @@ const waypoints = [
 const agents = [];
 const agentCount = 80;
 const routeGridWidth = 80;
-const impassableThreshold = 0.08;
-
 let previousTime = 0;
 let firstWaypointRoute = null;
 
@@ -107,7 +105,7 @@ function calculateCoarseRoute(targetWaypoint) {
   distance[targetY * width + targetX] = 0;
 
   for (let i = 0; i < width * height; i++) {
-    const current = findNearestUnvisited(distance, visited, passability);
+    const current = findNearestUnvisited(distance, visited);
     if (current === -1) break;
 
     visited[current] = 1;
@@ -136,12 +134,12 @@ function readPassabilityGrid(width, height) {
   return passability;
 }
 
-function findNearestUnvisited(distance, visited, passability) {
+function findNearestUnvisited(distance, visited) {
   let bestIndex = -1;
   let bestDistance = Infinity;
 
   for (let i = 0; i < distance.length; i++) {
-    if (visited[i] || passability[i] <= impassableThreshold) continue;
+    if (visited[i]) continue;
     if (distance[i] < bestDistance) {
       bestDistance = distance[i];
       bestIndex = i;
@@ -164,11 +162,10 @@ function relaxNeighbors(index, width, height, passability, distance) {
       if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
 
       const nextIndex = ny * width + nx;
-      const nextPassability = passability[nextIndex];
-      if (nextPassability <= impassableThreshold) continue;
-
       const stepLength = Math.hypot(ox, oy);
-      const stepCost = stepLength / Math.max(nextPassability, 0.001);
+      const stepCost = routeStepCost(passability[index], passability[nextIndex], stepLength);
+      if (!Number.isFinite(stepCost)) continue;
+
       const nextDistance = distance[index] + stepCost;
 
       if (nextDistance < distance[nextIndex]) {
@@ -176,6 +173,13 @@ function relaxNeighbors(index, width, height, passability, distance) {
       }
     }
   }
+}
+
+function routeStepCost(currentPassability, nextPassability, stepLength) {
+  const pathPassability = Math.min(currentPassability, nextPassability);
+  if (pathPassability === 0) return Infinity;
+
+  return stepLength / (pathPassability * pathPassability);
 }
 
 function drawScene() {
@@ -202,8 +206,11 @@ function drawCoarseRouteMapDebug(width, height) {
       if (!Number.isFinite(distance)) continue;
 
       const closeness = 1 - distance / maxDistance;
+      const radius = Math.min(cellWidth, cellHeight) * 0.42;
       ctx.fillStyle = `rgba(0, 208, 132, ${0.08 + closeness * 0.38})`;
-      ctx.fillRect(x * cellWidth, y * cellHeight, cellWidth, cellHeight);
+      ctx.beginPath();
+      ctx.arc((x + 0.5) * cellWidth, (y + 0.5) * cellHeight, radius, 0, Math.PI * 2);
+      ctx.fill();
     }
   }
 }
