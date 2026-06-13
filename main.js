@@ -535,7 +535,7 @@ function routeStepCost(currentPassability, nextPassability, stepLength) {
   const pathPassability = Math.min(currentPassability, nextPassability);
   if (pathPassability === 0) return Infinity;
 
-  return stepLength / (Math.pow(pathPassability, 4));
+  return stepLength / (Math.pow(pathPassability, 6));
 }
 
 function drawScene() {
