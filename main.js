@@ -618,7 +618,7 @@ function drawWaypoints(width, height) {
 }
 
 function drawAgents(width, height) {
-  ctx.fillStyle = "#1f6fff";
+  ctx.fillStyle = "#2fb344";
 
   for (const agent of agents) {
     ctx.beginPath();
