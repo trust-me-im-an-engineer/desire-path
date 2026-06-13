@@ -572,7 +572,7 @@ function drawCoarseRouteMapDebug(width, height) {
   const firstWaypointRoute = routesByWaypoint[0];
   if (!firstWaypointRoute) return;
 
-  const maxDistance = findMaxRouteDistance(firstWaypointRoute.distance);
+  const maxDistance = findMaxRouteDistance(firstWaypointRoute.distance); 
   const cellWidth = width / firstWaypointRoute.width;
   const cellHeight = height / firstWaypointRoute.height;
 
