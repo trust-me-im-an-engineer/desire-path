@@ -24,8 +24,9 @@ const waypoints = [
 ];
 
 const agents = [];
+const impassableThreshold = 0.01
 const trailDepositRate = 0.018;
-const trailPassabilityBonus = 0.45;
+const trailPassabilityBonus = 0.1;
 const routeRecalculateInterval = 1;
 const minimumAgentSpawnRate = 6;
 const agentPopulationRecoveryTime = 8;
@@ -407,7 +408,7 @@ function addTrailsToPassability(basePassability, width, height) {
 
   const passability = new Float32Array(basePassability.length);
   for (let i = 0; i < passability.length; i++) {
-    passability[i] = basePassability[i] === 0
+    passability[i] = basePassability[i] < impassableThreshold
       ? 0
       : Math.min(1, basePassability[i] + trailGrid.values[i] * trailPassabilityBonus);
   }
