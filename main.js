@@ -20,6 +20,7 @@ const waypoints = [
   { x: 0.18, y: 0.80 },
   { x: 0.80, y: 0.78 },
   { x: 0.50, y: 0.56 },
+  { x: 0.50, y: 0.36 },
 ];
 
 const agents = [];
@@ -582,7 +583,7 @@ function drawCoarseRouteMapDebug(width, height) {
       ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
       ctx.fill();
 
-      ctx.fillStyle = "rgba(255, 255, 255, 0)";
+      ctx.fillStyle = "rgba(255, 255, 255, 0.0)";
       ctx.fillText(String(Math.round(distance)), centerX, centerY);
     }
   }

@@ -6,3 +6,4 @@ build/
 .env
 *.log
 __pycache__/
+.devcontainer/
