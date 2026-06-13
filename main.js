@@ -27,6 +27,8 @@ const agents = [];
 const trailDepositRate = 0.018;
 const trailPassabilityBonus = 0.45;
 const routeRecalculateInterval = 1;
+const minimumAgentSpawnRate = 6;
+const agentPopulationRecoveryTime = 8;
 let wanderStrength = Number(wanderStrengthInput.value);
 let wanderChangeRate = Number(wanderChangeRateInput.value);
 let wanderBlendRate = Number(wanderBlendRateInput.value);
@@ -36,6 +38,7 @@ let routeResolutionScale = Number(routeResolutionInput.value);
 let previousTime = 0;
 let routeRecalculateTimer = 0;
 let routeRecalculateIndex = 0;
+let agentSpawnRemainder = 0;
 let routesByWaypoint = [];
 let trailGrid = null;
 let isRouteDebugVisible = routeDebugInput.checked;
@@ -78,6 +81,7 @@ function tick(time) {
   previousTime = time;
 
   updateAgents(deltaTime);
+  spawnAgents(deltaTime);
   updateRoutesAfterTrails(deltaTime);
   drawScene();
 
@@ -123,7 +127,8 @@ function updateAgents(deltaTime) {
     const desiredDirection = findCoarseRouteDirection(agent);
 
     if (Math.hypot(target.x - agent.x, target.y - agent.y) < 0.01) {
-      agent.targetIndex = nextTargetIndex(agent.targetIndex);
+      agents.splice(i, 1);
+      i--;
       continue;
     }
 
@@ -314,16 +319,6 @@ function directionToWaypoint(agent) {
   };
 }
 
-function nextTargetIndex(currentTargetIndex) {
-  let targetIndex = randomWaypointIndex();
-
-  while (targetIndex === currentTargetIndex) {
-    targetIndex = randomWaypointIndex();
-  }
-
-  return targetIndex;
-}
-
 function updateRouteResolution() {
   routeResolutionScale = Number(routeResolutionInput.value);
   updateRouteResolutionLabel();
@@ -373,11 +368,29 @@ function updateRouteDebug() {
 }
 
 function syncAgentCount() {
-  while (agents.length < agentCount) {
-    agents.push(createAgent());
+  if (agents.length > agentCount) {
+    agents.length = agentCount;
+  }
+}
+
+function spawnAgents(deltaTime) {
+  if (agents.length >= agentCount) {
+    agentSpawnRemainder = 0;
+    return;
   }
 
-  agents.length = agentCount;
+  const missingAgents = agentCount - agents.length;
+  const spawnRate = Math.max(minimumAgentSpawnRate, agentCount / agentPopulationRecoveryTime);
+  agentSpawnRemainder += spawnRate * deltaTime;
+  const spawnCount = Math.min(missingAgents, Math.floor(agentSpawnRemainder));
+
+  if (spawnCount === 0) return;
+
+  agentSpawnRemainder -= spawnCount;
+
+  for (let i = 0; i < spawnCount; i++) {
+    agents.push(createAgent());
+  }
 }
 
 function calculateRoutesByWaypoint() {
