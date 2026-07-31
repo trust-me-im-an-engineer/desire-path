@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Desire path</title>
+
+  <link rel="stylesheet" href="./style.css">
+
+  <script type="module" src="./main.ts"></script>
+</head>
+
+<body>
+  <main>
+    <aside>
+      <label class="control">
+        Разрешение
+        <input id="routeResolution" type="range" min="1" max="20" value="8">
+        <output id="routeResolutionValue"></output>
+      </label>
+      
+      <label class="control">
+        Агенты
+        <input id="agentCount" type="range" min="0" max="10000" value="1000">
+        <output id="agentCountValue"></output>
+      </label>
+      
+      <label class="control">
+        Инерция направления
+        <input id="turnSmoothness" type="range" min="0" max="555" value="0.6" step="0.1">
+        <output id="turnSmoothnessValue"></output>
+      </label>
+      
+      <div class="debug-actions">
+        <button id="pauseSimulation" type="button">Пауза</button>
+        <button id="stepSimulation" type="button" disabled>Шаг вперёд</button>
+      </div>
+    </aside>
+    
+    <canvas id="simulationCanvas"></canvas>
+  </main>
+</body>
+
+</html>
