@@ -10,7 +10,7 @@ camera.position.z = 100;
 
 var texture: THREE.Texture;
 const loader = new THREE.TextureLoader();
-texture = await loader.loadAsync('assets/initial-cost-map.png');
+texture = await loader.loadAsync('assets/5.png');
 texture.colorSpace = THREE.SRGBColorSpace;
 
 const plane = new THREE.PlaneGeometry(texture.width, texture.height);
@@ -21,17 +21,25 @@ function resizeToDisplaySize(renderer: THREE.WebGLRenderer, camera: THREE.Orthog
 	const canvas = renderer.domElement;
 	const displayWidth = canvas.clientWidth;
 	const displayHeight = canvas.clientHeight;
-	const pixelRatio = renderer.getPixelRatio();
-	const renderWidth = Math.floor(displayWidth * pixelRatio);
-	const renderHeight = Math.floor(displayHeight * pixelRatio);
+	const renderWidth = Math.floor(displayWidth * window.devicePixelRatio);
+	const renderHeight = Math.floor(displayHeight * window.devicePixelRatio);
 	
 	if (canvas.width !== renderWidth || canvas.height !== renderHeight) {
 		renderer.setSize(renderWidth, renderHeight, false);
 
-		camera.left = -texture.width/2;
-		camera.right = texture.width/2;
-		camera.top = texture.height/2;
-		camera.bottom = -texture.height/2;
+		const canvasAspect = displayWidth / displayHeight;
+		const textureAspect = texture.width / texture.height;
+		const viewWidth = canvasAspect > textureAspect
+			? texture.height * canvasAspect
+			: texture.width;
+		const viewHeight = canvasAspect > textureAspect
+			? texture.height
+			: texture.width / canvasAspect;
+
+		camera.left = -viewWidth / 2;
+		camera.right = viewWidth / 2;
+		camera.top = viewHeight / 2;
+		camera.bottom = -viewHeight / 2;
 		camera.updateProjectionMatrix();
 	}
 }
