@@ -10,7 +10,7 @@ camera.position.z = 100;
 
 var texture: THREE.Texture;
 const loader = new THREE.TextureLoader();
-texture = await loader.loadAsync('assets/5.png');
+texture = await loader.loadAsync('assets/2.png');
 texture.colorSpace = THREE.SRGBColorSpace;
 
 const plane = new THREE.PlaneGeometry(texture.width, texture.height);
@@ -23,7 +23,7 @@ function resizeToDisplaySize(renderer: THREE.WebGLRenderer, camera: THREE.Orthog
 	const displayHeight = canvas.clientHeight;
 	const renderWidth = Math.floor(displayWidth * window.devicePixelRatio);
 	const renderHeight = Math.floor(displayHeight * window.devicePixelRatio);
-	
+
 	if (canvas.width !== renderWidth || canvas.height !== renderHeight) {
 		renderer.setSize(renderWidth, renderHeight, false);
 
