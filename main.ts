@@ -8,14 +8,24 @@ const camera = new THREE.OrthographicCamera();
 
 camera.position.z = 100;
 
-var texture: THREE.Texture;
 const loader = new THREE.TextureLoader();
-texture = await loader.loadAsync('assets/2.png');
-texture.colorSpace = THREE.SRGBColorSpace;
+const loadedTexture = await loader.loadAsync("assets/5a.png");
 
-const plane = new THREE.PlaneGeometry(texture.width, texture.height);
-const planeMesh = new THREE.Mesh(plane, new THREE.MeshBasicMaterial({ map: texture }));
+// User-visible map
+const displayTexture = loadedTexture;
+displayTexture.colorSpace = THREE.SRGBColorSpace;
+
+const plane = new THREE.PlaneGeometry(displayTexture.width, displayTexture.height);
+const planeMesh = new THREE.Mesh(plane, new THREE.MeshBasicMaterial({ map: displayTexture }));
 scene.add(planeMesh)
+
+// Numeric terrain data
+const terrainTexture = loadedTexture.clone();
+terrainTexture.colorSpace = THREE.NoColorSpace;
+terrainTexture.generateMipmaps = false;
+terrainTexture.minFilter = THREE.LinearFilter;
+terrainTexture.magFilter = THREE.LinearFilter;
+terrainTexture.needsUpdate = true;
 
 function resizeToDisplaySize(renderer: THREE.WebGLRenderer, camera: THREE.OrthographicCamera) {
 	const canvas = renderer.domElement;
@@ -28,13 +38,13 @@ function resizeToDisplaySize(renderer: THREE.WebGLRenderer, camera: THREE.Orthog
 		renderer.setSize(renderWidth, renderHeight, false);
 
 		const canvasAspect = displayWidth / displayHeight;
-		const textureAspect = texture.width / texture.height;
+		const textureAspect = displayTexture.width / displayTexture.height;
 		const viewWidth = canvasAspect > textureAspect
-			? texture.height * canvasAspect
-			: texture.width;
+			? displayTexture.height * canvasAspect
+			: displayTexture.width;
 		const viewHeight = canvasAspect > textureAspect
-			? texture.height
-			: texture.width / canvasAspect;
+			? displayTexture.height
+			: displayTexture.width / canvasAspect;
 
 		camera.left = -viewWidth / 2;
 		camera.right = viewWidth / 2;
