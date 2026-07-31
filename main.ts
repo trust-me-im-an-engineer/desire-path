@@ -3,7 +3,7 @@ import * as THREE from 'three';
 const canvas = <HTMLCanvasElement>document.getElementById("simulationCanvas");
 
 const scene = new THREE.Scene();
-const renderer = new THREE.WebGLRenderer({ canvas });
+const renderer = new THREE.WebGLRenderer({ canvas, alpha: true });
 const camera = new THREE.OrthographicCamera();
 
 camera.position.z = 100;
