@@ -4,8 +4,9 @@
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "strict": true,
+    "skipLibCheck": true,
     "sourceMap": true,
     "noEmit": true
   },
-  "include": ["main.ts"]
+  "include": ["src/**/*.ts"]
 }
