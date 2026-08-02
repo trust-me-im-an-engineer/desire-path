@@ -16,17 +16,12 @@ export function resizeToDisplaySize(
 
 		const canvasAspect = displayWidth / displayHeight;
 		const textureAspect = displayTexture.width / displayTexture.height;
-		const viewWidth = canvasAspect > textureAspect
-			? displayTexture.height * canvasAspect
-			: displayTexture.width;
-		const viewHeight = canvasAspect > textureAspect
-			? displayTexture.height
-			: displayTexture.width / canvasAspect;
+		const viewWidth = canvasAspect > textureAspect ? canvasAspect : textureAspect;
+		const viewHeight = canvasAspect > textureAspect ? 1 : textureAspect / canvasAspect;
 
-		camera.left = -viewWidth / 2;
-		camera.right = viewWidth / 2;
-		camera.top = viewHeight / 2;
-		camera.bottom = -viewHeight / 2;
+		camera.right = viewWidth;
+		camera.top = 0;
+		camera.bottom = -viewHeight;
 		camera.updateProjectionMatrix();
 	}
 }
