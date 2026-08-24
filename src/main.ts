@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { createInterestPoints } from "./interest-points";
 import { resize } from "./viewport";
 
 const canvas = <HTMLCanvasElement>document.getElementById("simulationCanvas");
@@ -24,8 +25,15 @@ mesh.position.x = textureAspect / 2;
 mesh.position.y = -0.5;
 scene.add(mesh);
 
+const interestPoints = createInterestPoints([
+	{ x: 0.2, y: 0.46, weight: 0.02 },
+	{ x: 1.4, y: 0.44, weight: 0.02 },
+]);
+
+scene.add(interestPoints.markers);
+
 function frameRequestCallback() {
-	resize(renderer, camera, textureAspect)
+	resize(renderer, camera, textureAspect);
 	renderer.render(scene, camera);
 }
 

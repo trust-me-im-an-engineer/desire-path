@@ -3,21 +3,24 @@ import * as THREE from "three";
 export type InterestPoint = {
 	x: number;
 	y: number;
+	weight: number;
 };
 
 export function createInterestPoints(points: readonly InterestPoint[]) {
-	const data = new Float32Array(points.length * 2);
+	const data = new Float32Array(points.length * 3);
 
-	for (let i = 0; i < points.length; i++) {
-		data[i * 2] = points[i].x;
-		data[i * 2 + 1] = points[i].y;
+	let i = 0;
+	for (const point of points) {
+		data[i++] = point.x;
+		data[i++] = point.y;
+		data[i++] = point.weight;
 	}
 
 	const texture = new THREE.DataTexture(
 		data,
 		points.length,
 		1,
-		THREE.RGFormat,
+		THREE.RGBFormat,
 		THREE.FloatType,
 	);
 
@@ -29,20 +32,20 @@ export function createInterestPoints(points: readonly InterestPoint[]) {
 
 	// static render for now
 	const markers = new THREE.Group();
-	const geometry = new THREE.CircleGeometry(0.02);
-	const material = new THREE.MeshBasicMaterial({
-		color: 0xd93d2b,
-		depthTest: false,
-		depthWrite: false,
-	});
 	for (const point of points) {
-		const marker = new THREE.Mesh(geometry, material);
+		const marker = new THREE.Mesh(
+			new THREE.CircleGeometry(point.weight),
+			new THREE.MeshBasicMaterial({
+				color: 0xd93d2b,
+				depthTest: false,
+				depthWrite: false,
+			})
+		);
 		marker.position.set(point.x, -point.y, 1);
 		markers.add(marker);
 	}
 
 	return {
-		count: points.length,
 		texture,
 		markers,
 	};
