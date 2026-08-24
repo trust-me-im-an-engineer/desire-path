@@ -1,27 +1,23 @@
 import * as THREE from "three";
 
-export function resizeToDisplaySize(
+export function resize(
 	renderer: THREE.WebGLRenderer,
 	camera: THREE.OrthographicCamera,
-	displayTexture: THREE.Texture,
+	textureAspect: number,
 ): void {
 	const canvas = renderer.domElement;
-	const displayWidth = canvas.clientWidth;
-	const displayHeight = canvas.clientHeight;
-	const renderWidth = Math.floor(displayWidth * window.devicePixelRatio);
-	const renderHeight = Math.floor(displayHeight * window.devicePixelRatio);
+	const renderWidth = Math.floor(canvas.clientWidth * window.devicePixelRatio);
+	const renderHeight = Math.floor(canvas.clientHeight * window.devicePixelRatio);
 
 	if (canvas.width !== renderWidth || canvas.height !== renderHeight) {
 		renderer.setSize(renderWidth, renderHeight, false);
 
-		const canvasAspect = displayWidth / displayHeight;
-		const textureAspect = displayTexture.width / displayTexture.height;
-		const viewWidth = canvasAspect > textureAspect ? canvasAspect : textureAspect;
-		const viewHeight = canvasAspect > textureAspect ? 1 : textureAspect / canvasAspect;
+		const canvasAspect = canvas.clientWidth / canvas.clientHeight;
+		const cameraWidth = canvasAspect > textureAspect ? canvasAspect : textureAspect;
+		const cameraHeight = canvasAspect > textureAspect ? 1 : textureAspect / canvasAspect;
 
-		camera.right = viewWidth;
-		camera.top = 0;
-		camera.bottom = -viewHeight;
+		camera.right = cameraWidth;
+		camera.bottom = -cameraHeight;
 		camera.updateProjectionMatrix();
 	}
 }
