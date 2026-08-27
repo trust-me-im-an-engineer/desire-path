@@ -3,7 +3,7 @@ import * as THREE from "three";
 export function resize(
 	renderer: THREE.WebGLRenderer,
 	camera: THREE.OrthographicCamera,
-	textureAspect: number,
+	terrainTextureSize: THREE.Vector2,
 ): void {
 	const canvas = renderer.domElement;
 	const renderWidth = Math.floor(canvas.clientWidth * window.devicePixelRatio);
@@ -13,11 +13,12 @@ export function resize(
 		renderer.setSize(renderWidth, renderHeight, false);
 
 		const canvasAspect = canvas.clientWidth / canvas.clientHeight;
-		const cameraWidth = canvasAspect > textureAspect ? canvasAspect : textureAspect;
-		const cameraHeight = canvasAspect > textureAspect ? 1 : textureAspect / canvasAspect;
+		const textureAspect = terrainTextureSize.width / terrainTextureSize.height;
+		const cameraRight = canvasAspect > textureAspect ? terrainTextureSize.height * canvasAspect : terrainTextureSize.width;
+		const cameraBottom = canvasAspect > textureAspect ? terrainTextureSize.height : terrainTextureSize.width / canvasAspect;
 
-		camera.right = cameraWidth;
-		camera.bottom = -cameraHeight;
+		camera.right = cameraRight;
+		camera.bottom = -cameraBottom;
 		camera.updateProjectionMatrix();
 	}
 }
