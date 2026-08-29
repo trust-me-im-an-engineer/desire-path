@@ -1,9 +1,11 @@
 import * as THREE from "three";
 
-export type InterestPoint = {
-	position: THREE.Vector2;
-	weight: number;
-};
+export class InterestPoint {
+	constructor(
+		public nativeResolutionPosition: THREE.Vector2,
+		public weight: number,
+	) {}
+}
 
 export function createInterestPointsGroup(points: readonly InterestPoint[]): THREE.Group {
 	const group = new THREE.Group();
@@ -12,7 +14,7 @@ export function createInterestPointsGroup(points: readonly InterestPoint[]): THR
 			new THREE.CircleGeometry(point.weight),
 			new THREE.MeshBasicMaterial({ color: 0xd93d2b })
 		);
-		pointMesh.position.set(point.position.x, -point.position.y, 2);
+		pointMesh.position.set(point.nativeResolutionPosition.x, -point.nativeResolutionPosition.y, 2);
 		group.add(pointMesh);
 	}
 	return group;

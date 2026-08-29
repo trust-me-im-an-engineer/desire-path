@@ -1,9 +1,11 @@
 import * as THREE from "three";
 
+import type { SimulationResolution } from "./simulation-size";
+
 export function resize(
 	renderer: THREE.WebGLRenderer,
 	camera: THREE.OrthographicCamera,
-	nativeSize: THREE.Vector2,
+	simulationResolution: SimulationResolution,
 ): void {
 	const canvas = renderer.domElement;
 	const renderWidth = Math.floor(canvas.clientWidth * window.devicePixelRatio);
@@ -13,9 +15,13 @@ export function resize(
 		renderer.setSize(renderWidth, renderHeight, false);
 
 		const canvasAspect = canvas.clientWidth / canvas.clientHeight;
-		const textureAspect = nativeSize.width / nativeSize.height;
-		const cameraRight = canvasAspect > textureAspect ? nativeSize.height * canvasAspect : nativeSize.width;
-		const cameraBottom = canvasAspect > textureAspect ? nativeSize.height : nativeSize.width / canvasAspect;
+		const textureAspect = simulationResolution.native.width / simulationResolution.native.height;
+		let cameraRight = simulationResolution.native.width;
+		let cameraBottom = simulationResolution.native.width / canvasAspect;
+		if (canvasAspect > textureAspect) {
+			cameraRight = simulationResolution.native.height * canvasAspect;
+			cameraBottom = simulationResolution.native.height;
+		}
 
 		camera.right = cameraRight;
 		camera.bottom = -cameraBottom;

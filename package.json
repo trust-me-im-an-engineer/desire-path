@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "heap-js": "^2.7.1",
     "three": "^0.185.1"
   },
   "devDependencies": {

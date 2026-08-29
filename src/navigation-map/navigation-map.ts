@@ -1,8 +1,10 @@
+import { Heap } from "heap-js";
 import * as THREE from "three";
 import { FullScreenQuad } from "three/addons/postprocessing/Pass.js";
 
 import { InterestPoint } from "../interest-points";
 
+import type { SimulationResolution } from "../simulation-size";
 import computeFragmentShader from './compute/navigation-compute.frag?raw';
 import computeVertexShader from './compute/navigation-compute.vert?raw';
 import renderFragmentShader from './render/navigation-render.frag?raw';
@@ -15,11 +17,11 @@ export type NavigationMap = {
 	compute(renderer: THREE.WebGLRenderer): void;
 }
 
-export function createNavigationMap(nativeSize: THREE.Vector2, downscale: number, coarseMapTexture: THREE.Texture, point: InterestPoint): NavigationMap {
+export function createNavigationMap(simulationResolution: SimulationResolution, coarseMapTexture: THREE.Texture, point: InterestPoint): NavigationMap {
 	// Compute navigation field to single-channel target
 	const computeTarget = new THREE.WebGLRenderTarget(
-		Math.floor(nativeSize.width / downscale),
-		Math.floor(nativeSize.height / downscale),
+		simulationResolution.downscaled.width,
+		simulationResolution.downscaled.height,
 		{
 			format: THREE.RedFormat,
 			type: THREE.FloatType,
@@ -38,8 +40,8 @@ export function createNavigationMap(nativeSize: THREE.Vector2, downscale: number
 		uniforms: {
 			uInterestPointPosition: {
 				value: new THREE.Vector2(
-					Math.floor(point.position.x / downscale),
-					Math.floor(point.position.y / downscale),
+					Math.floor(point.nativeResolutionPosition.x / simulationResolution.downscaleFactor),
+					Math.floor(point.nativeResolutionPosition.y / simulationResolution.downscaleFactor),
 				)
 			},
 			uTerrainTexture: { value: coarseMapTexture },
@@ -69,10 +71,14 @@ export function createNavigationMap(nativeSize: THREE.Vector2, downscale: number
 	});
 
 	const navigationMesh = new THREE.Mesh(
-		new THREE.PlaneGeometry(nativeSize.width, nativeSize.height),
+		new THREE.PlaneGeometry(simulationResolution.native.width, simulationResolution.native.height),
 		renderMaterial
 	);
-	navigationMesh.position.set(nativeSize.width / 2, -nativeSize.height / 2, 1);
+	navigationMesh.position.set(
+		simulationResolution.native.width / 2,
+		-simulationResolution.native.height / 2,
+		1,
+	);
 
 	const compute = function (renderer: THREE.WebGLRenderer) {
 		renderer.setRenderTarget(computeTarget);
@@ -87,11 +93,92 @@ export function createNavigationMap(nativeSize: THREE.Vector2, downscale: number
 	};
 }
 
+/** A finite value is used so navigation fields can safely be stored in textures. */
+export const UNREACHABLE = 1e20;
 
-export function dijkstra(interestPoint: InterestPoint, terrain: Uint8Array): Float32Array {
-	const navigationMap = new Float32Array;
+type HeapEntry = {
+	index: number;
+	cost: number;
+};
 
+/**
+ * Builds a row-major cost field leading away from `point`.
+ *
+ * Terrain values are traversal speeds in [0, 1]. Zero is impassable, one has
+ * no terrain penalty, and costs for intermediate values are proportional to
+ * their inverse speed. The returned costs are not normalized.
+ *
+ * Costs use native-pixel distance units. Grid dimensions and cell distance are
+ * read from `simulationResolution` so they remain consistent with the map.
+ */
+export function dijkstra(point: THREE.Vector2, map: Float32Array, simulationResolution: SimulationResolution): Float32Array {
+	const width = simulationResolution.downscaled.x;
+	const height = simulationResolution.downscaled.y;
+	const cellSize = simulationResolution.downscaleFactor;
 
+	const navigationMap = new Float32Array(map.length);
+	navigationMap.fill(UNREACHABLE);
+
+	const pointIndex = point.y * width + point.x;
+	if (map[pointIndex] === 0) {
+		return navigationMap;
+	}
+
+	navigationMap[pointIndex] = 0;
+	const queue = new Heap<HeapEntry>((a, b) => a.cost - b.cost);
+	queue.push({ index: pointIndex, cost: 0 });
+
+	while (queue.length > 0) {
+		const current = queue.pop();
+		if (current === undefined) {
+			break;
+		}
+		if (current.cost !== navigationMap[current.index]) {
+			continue;
+		}
+
+		const x = current.index % width;
+		const y = Math.floor(current.index / width);
+		const currentWeight = map[current.index];
+
+		for (let offsetY = -1; offsetY <= 1; offsetY++) {
+			const nextY = y + offsetY;
+			if (nextY < 0 || nextY >= height) {
+				continue;
+			}
+
+			for (let offsetX = -1; offsetX <= 1; offsetX++) {
+				if (offsetX === 0 && offsetY === 0) {
+					continue;
+				}
+
+				const nextX = x + offsetX;
+				if (nextX < 0 || nextX >= width) {
+					continue;
+				}
+
+				const nextIndex = nextY * width + nextX;
+				const nextWeight = map[nextIndex];
+				if (nextWeight === 0) {
+					continue;
+				}
+
+				let distance = cellSize;
+				if (offsetX !== 0 && offsetY !== 0) {
+					distance *= Math.SQRT2;
+				}
+
+				const edgeCost = distance * (1 / currentWeight + 1 / nextWeight);
+
+				const candidate = Math.min(UNREACHABLE, current.cost + edgeCost);
+
+				if (candidate < navigationMap[nextIndex]) {
+					navigationMap[nextIndex] = candidate;
+					queue.push({ index: nextIndex, cost: navigationMap[nextIndex] });
+				}
+			}
+		}
+	}
 
 	return navigationMap;
 }
