@@ -39,10 +39,7 @@ export function createNavigationMap(simulationResolution: SimulationResolution, 
 
 		uniforms: {
 			uInterestPointPosition: {
-				value: new THREE.Vector2(
-					Math.floor(point.nativeResolutionPosition.x / simulationResolution.downscaleFactor),
-					Math.floor(point.nativeResolutionPosition.y / simulationResolution.downscaleFactor),
-				)
+				value: point.downscaledPosition,
 			},
 			uTerrainTexture: { value: coarseMapTexture },
 		},
@@ -108,13 +105,11 @@ type HeapEntry = {
  * no terrain penalty, and costs for intermediate values are proportional to
  * their inverse speed. The returned costs are not normalized.
  *
- * Costs use native-pixel distance units. Grid dimensions and cell distance are
- * read from `simulationResolution` so they remain consistent with the map.
+ * Costs use native-pixel distance units.
  */
 export function dijkstra(point: THREE.Vector2, map: Float32Array, simulationResolution: SimulationResolution): Float32Array {
 	const width = simulationResolution.downscaled.x;
 	const height = simulationResolution.downscaled.y;
-	const cellSize = simulationResolution.downscaleFactor;
 
 	const navigationMap = new Float32Array(map.length);
 	navigationMap.fill(UNREACHABLE);
@@ -163,7 +158,7 @@ export function dijkstra(point: THREE.Vector2, map: Float32Array, simulationReso
 					continue;
 				}
 
-				let distance = cellSize;
+				let distance = simulationResolution.downscaleFactor;
 				if (offsetX !== 0 && offsetY !== 0) {
 					distance *= Math.SQRT2;
 				}

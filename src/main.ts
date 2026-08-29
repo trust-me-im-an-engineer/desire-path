@@ -41,21 +41,23 @@ terrainMesh.position.set(simulationResolution.native.width / 2, -simulationResol
 scene.add(terrainMesh);
 
 const interestPoints: readonly InterestPoint[] = [
-	new InterestPoint(new THREE.Vector2(200, 270), 12),
-	new InterestPoint(new THREE.Vector2(800, 264), 12),
+	new InterestPoint(new THREE.Vector2(200, 270), 12, simulationResolution.downscaleFactor),
+	new InterestPoint(new THREE.Vector2(800, 264), 12, simulationResolution.downscaleFactor),
 ];
 
 const interestPointsGroup = createInterestPointsGroup(interestPoints);
 scene.add(interestPointsGroup);
 
 const coarseMap = createCoarseMap(simulationResolution, terrainTexture);
-scene.add(coarseMap.mesh);
+// scene.add(coarseMap.mesh);
 
 const navigationMap = createNavigationMap(simulationResolution, coarseMap.computeTarget.texture, interestPoints[0]);
-// scene.add(navigationMap.mesh);
+scene.add(navigationMap.mesh);
 
 coarseMap.compute(renderer);
 const coarseMapArray = coarseMap.toArray(renderer);
+
+const navigationMapArray = dijkstra(interestPoints[0].downscaledPosition, coarseMapArray, simulationResolution);
 
 navigationMap.compute(renderer);
 
