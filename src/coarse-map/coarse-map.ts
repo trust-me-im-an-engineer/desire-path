@@ -7,6 +7,7 @@ import vertexShader from './coarse-map.vert?raw';
 export type CoarseMap = {
 	renderTarget: THREE.WebGLRenderTarget,
 	pass: FullScreenQuad,
+	mesh: THREE.Mesh,
 }
 
 export function createCoarseMap(simulationSize: THREE.Vector2, downscale: number, terrainTexture: THREE.Texture): CoarseMap {
@@ -45,8 +46,16 @@ export function createCoarseMap(simulationSize: THREE.Vector2, downscale: number
 		fragmentShader: fragmentShader,
 	});
 
+	// Render for debugging
+	const mesh = new THREE.Mesh(
+		new THREE.PlaneGeometry(simulationSize.width, simulationSize.height),
+		new THREE.MeshBasicMaterial({ map: renderTarget.texture })
+	);
+	mesh.position.set(simulationSize.width / 2, -simulationSize.height / 2, 4);
+
 	return {
 		renderTarget: renderTarget,
 		pass: new FullScreenQuad(coarseMapShaderMaterial),
+		mesh: mesh,
 	}
 }

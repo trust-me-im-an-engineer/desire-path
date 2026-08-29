@@ -53,14 +53,8 @@ for (const point of interestPoints) {
 scene.add(interestPointsGroup);
 
 const coarseMap = createCoarseMap(simulationSize, COARSE_MAP_DOWNSCALE, terrainTexture);
-
-// Render for debugging
-const coarseMapMesh = new THREE.Mesh(
-	new THREE.PlaneGeometry(simulationSize.width, simulationSize.height),
-	new THREE.MeshBasicMaterial({ map: coarseMap.renderTarget.texture })
-);
-coarseMapMesh.position.set(simulationSize.width / 2, -simulationSize.height / 2, 4);
-scene.add(coarseMapMesh);
+// Render coarse map for debug
+scene.add(coarseMap.mesh);
 
 // Compute navigation field to single-channel target of simulationSize
 const navigationComputeTarget = new THREE.WebGLRenderTarget(
