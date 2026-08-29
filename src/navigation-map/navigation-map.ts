@@ -3,91 +3,87 @@ import * as THREE from "three";
 import { FullScreenQuad } from "three/addons/postprocessing/Pass.js";
 
 import { InterestPoint } from "../interest-points";
-
 import type { SimulationResolution } from "../simulation-size";
+
 import computeFragmentShader from './compute/navigation-compute.frag?raw';
 import computeVertexShader from './compute/navigation-compute.vert?raw';
 import renderFragmentShader from './render/navigation-render.frag?raw';
 import renderVertexShader from './render/navigation-render.vert?raw';
 
-export type NavigationMap = {
-	computeTarget: THREE.WebGLRenderTarget,
-	pass: FullScreenQuad,
-	mesh: THREE.Mesh,
-	compute(renderer: THREE.WebGLRenderer): void;
-}
+export class NavigationMap {
+	public computeTarget: THREE.WebGLRenderTarget;
+	public pass: FullScreenQuad;
+	public mesh: THREE.Mesh;
 
-export function createNavigationMap(simulationResolution: SimulationResolution, coarseMapTexture: THREE.Texture, point: InterestPoint): NavigationMap {
-	// Compute navigation field to single-channel target
-	const computeTarget = new THREE.WebGLRenderTarget(
-		simulationResolution.downscaled.width,
-		simulationResolution.downscaled.height,
-		{
-			format: THREE.RedFormat,
-			type: THREE.FloatType,
-			minFilter: THREE.NearestFilter,
-			magFilter: THREE.NearestFilter,
-			depthBuffer: false,
-			stencilBuffer: false,
-			generateMipmaps: false,
-			colorSpace: THREE.NoColorSpace,
-		}
-	);
+	constructor(
+		simulationResolution: SimulationResolution,
+		coarseMapTexture: THREE.Texture,
+		point: InterestPoint,
+	) {
+		// Compute navigation field to single-channel target
+		this.computeTarget = new THREE.WebGLRenderTarget(
+			simulationResolution.downscaled.width,
+			simulationResolution.downscaled.height,
+			{
+				format: THREE.RedFormat,
+				type: THREE.FloatType,
+				minFilter: THREE.NearestFilter,
+				magFilter: THREE.NearestFilter,
+				depthBuffer: false,
+				stencilBuffer: false,
+				generateMipmaps: false,
+				colorSpace: THREE.NoColorSpace,
+			}
+		);
 
-	const computeMaterial = new THREE.RawShaderMaterial({
-		glslVersion: THREE.GLSL3,
+		const computeMaterial = new THREE.RawShaderMaterial({
+			glslVersion: THREE.GLSL3,
 
-		uniforms: {
-			uInterestPointPosition: {
-				value: point.downscaledPosition,
+			uniforms: {
+				uInterestPointPosition: {
+					value: point.downscaledPosition,
+				},
+				uTerrainTexture: { value: coarseMapTexture },
 			},
-			uTerrainTexture: { value: coarseMapTexture },
-		},
 
-		vertexShader: computeVertexShader,
-		fragmentShader: computeFragmentShader,
-	});
+			vertexShader: computeVertexShader,
+			fragmentShader: computeFragmentShader,
+		});
 
-	const pass = new FullScreenQuad(computeMaterial);
+		this.pass = new FullScreenQuad(computeMaterial);
 
-	// Render computed navigation field texture using it's channel as transparency
-	const renderMaterial = new THREE.RawShaderMaterial({
-		glslVersion: THREE.GLSL3,
+		// Render computed navigation field texture using its channel as transparency
+		const renderMaterial = new THREE.RawShaderMaterial({
+			glslVersion: THREE.GLSL3,
 
-		uniforms: {
-			uNavigation: {
-				value: computeTarget.texture,
+			uniforms: {
+				uNavigation: {
+					value: this.computeTarget.texture,
+				},
 			},
-		},
 
-		vertexShader: renderVertexShader,
-		fragmentShader: renderFragmentShader,
+			vertexShader: renderVertexShader,
+			fragmentShader: renderFragmentShader,
 
-		transparent: true,
-		depthWrite: false,
-	});
+			transparent: true,
+			depthWrite: false,
+		});
 
-	const navigationMesh = new THREE.Mesh(
-		new THREE.PlaneGeometry(simulationResolution.native.width, simulationResolution.native.height),
-		renderMaterial
-	);
-	navigationMesh.position.set(
-		simulationResolution.native.width / 2,
-		-simulationResolution.native.height / 2,
-		1,
-	);
+		this.mesh = new THREE.Mesh(
+			new THREE.PlaneGeometry(simulationResolution.native.width, simulationResolution.native.height),
+			renderMaterial,
+		);
+		this.mesh.position.set(
+			simulationResolution.native.width / 2,
+			-simulationResolution.native.height / 2,
+			1,
+		);
+	}
 
-	const compute = function (renderer: THREE.WebGLRenderer) {
-		renderer.setRenderTarget(computeTarget);
-		pass.render(renderer);
-	};
-
-	return {
-		computeTarget: computeTarget,
-		pass: pass,
-		mesh: navigationMesh,
-		compute: compute,
-	};
+	compute(renderer: THREE.WebGLRenderer): void {
+		renderer.setRenderTarget(this.computeTarget);
+		this.pass.render(renderer);
+	}
 }
 
 /** A finite value is used so navigation fields can safely be stored in textures. */
