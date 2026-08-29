@@ -5,7 +5,7 @@ import fragmentShader from './coarse-map.frag?raw';
 import vertexShader from './coarse-map.vert?raw';
 
 export type CoarseMap = {
-	renderTarget: THREE.WebGLRenderTarget,
+	computeTarget: THREE.WebGLRenderTarget,
 	pass: FullScreenQuad,
 	mesh: THREE.Mesh,
 	compute(renderer: THREE.WebGLRenderer): void;
@@ -14,7 +14,7 @@ export type CoarseMap = {
 export function createCoarseMap(simulationSize: THREE.Vector2, downscale: number, terrainTexture: THREE.Texture): CoarseMap {
 	// Coarse map is 1/4th of native simulation resolution.
 	// It combines base terrain with wear map.
-	const renderTarget = new THREE.WebGLRenderTarget(
+	const computeTarget = new THREE.WebGLRenderTarget(
 		Math.floor(simulationSize.width / downscale),
 		Math.floor(simulationSize.height / downscale),
 		{
@@ -52,19 +52,19 @@ export function createCoarseMap(simulationSize: THREE.Vector2, downscale: number
 	// Render for debugging
 	const mesh = new THREE.Mesh(
 		new THREE.PlaneGeometry(simulationSize.width, simulationSize.height),
-		new THREE.MeshBasicMaterial({ map: renderTarget.texture }),
+		new THREE.MeshBasicMaterial({ map: computeTarget.texture }),
 	);
 	mesh.position.set(simulationSize.width / 2, -simulationSize.height / 2, 4);
 
 	const compute = function (renderer: THREE.WebGLRenderer) {
-		renderer.setRenderTarget(renderTarget);
+		renderer.setRenderTarget(computeTarget);
 		pass.render(renderer);
 	};
 
 	return {
-		renderTarget: renderTarget,
+		computeTarget: computeTarget,
 		pass: pass,
 		mesh: mesh,
 		compute: compute,
-	}
+	};
 }

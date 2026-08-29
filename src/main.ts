@@ -1,13 +1,9 @@
 import * as THREE from "three";
-import { FullScreenQuad } from "three/addons/postprocessing/Pass.js";
 import { createInterestPointsGroup, type InterestPoint } from "./interest-points";
 import { resize } from "./viewport";
 
 import { createCoarseMap } from "./coarse-map/coarse-map";
-import navigationComputeFragmentShader from './shaders/navigation/compute/navigation-compute.frag?raw';
-import navigationComputeVertexShader from './shaders/navigation/compute/navigation-compute.vert?raw';
-import navigationRenderFragmentShader from './shaders/navigation/render/navigation-render.frag?raw';
-import navigationRenderVertexShader from './shaders/navigation/render/navigation-render.vert?raw';
+import { createNavigationMap } from "./navigation-map/navigation-map";
 
 const COARSE_MAP_DOWNSCALE = 8;
 
@@ -27,13 +23,13 @@ const terrainTexture = await new THREE.TextureLoader().loadAsync("assets/2.png")
 terrainTexture.generateMipmaps = false;
 terrainTexture.colorSpace = THREE.SRGBColorSpace;
 
-const simulationSize = new THREE.Vector2(terrainTexture.width, terrainTexture.height);
+const nativeSize = new THREE.Vector2(terrainTexture.width, terrainTexture.height);
 
 const terrainMesh = new THREE.Mesh(
-	new THREE.PlaneGeometry(simulationSize.width, simulationSize.height),
+	new THREE.PlaneGeometry(nativeSize.width, nativeSize.height),
 	new THREE.MeshBasicMaterial({ map: terrainTexture })
 );
-terrainMesh.position.set(simulationSize.width / 2, -simulationSize.height / 2);
+terrainMesh.position.set(nativeSize.width / 2, -nativeSize.height / 2);
 scene.add(terrainMesh);
 
 const interestPoints: readonly InterestPoint[] = [
@@ -44,75 +40,18 @@ const interestPoints: readonly InterestPoint[] = [
 const interestPointsGroup = createInterestPointsGroup(interestPoints);
 scene.add(interestPointsGroup);
 
-const coarseMap = createCoarseMap(simulationSize, COARSE_MAP_DOWNSCALE, terrainTexture);
-// Render coarse map for debug
+const coarseMap = createCoarseMap(nativeSize, COARSE_MAP_DOWNSCALE, terrainTexture);
 // scene.add(coarseMap.mesh);
 
-// Compute navigation field to single-channel target of simulationSize
-const navigationComputeTarget = new THREE.WebGLRenderTarget(
-	simulationSize.width,
-	simulationSize.height,
-	{
-		format: THREE.RedFormat,
-		type: THREE.FloatType,
-		minFilter: THREE.NearestFilter,
-		magFilter: THREE.NearestFilter,
-		depthBuffer: false,
-		stencilBuffer: false,
-		generateMipmaps: false,
-		colorSpace: THREE.NoColorSpace,
-	}
-);
-
-// Compute navigation field only for first point for now
-const navigationComputeMaterial = new THREE.RawShaderMaterial({
-	glslVersion: THREE.GLSL3,
-
-	uniforms: {
-		uInterestPointPosition: { value: interestPoints[0].position },
-		uSimulationSize: { value: simulationSize },
-		uTerrainTexture: { value: terrainTexture },
-	},
-
-	vertexShader: navigationComputeVertexShader,
-	fragmentShader: navigationComputeFragmentShader,
-});
-
-const navigationPass = new FullScreenQuad(navigationComputeMaterial);
-
-// Render computed navigation field texture using it's channel as transparency
-const navigationRenderMaterial = new THREE.RawShaderMaterial({
-	glslVersion: THREE.GLSL3,
-
-	uniforms: {
-		uNavigation: {
-			value: navigationComputeTarget.texture,
-		},
-	},
-
-	vertexShader: navigationRenderVertexShader,
-	fragmentShader: navigationRenderFragmentShader,
-
-	transparent: true,
-	depthWrite: false,
-});
-
-const navigationMesh = new THREE.Mesh(
-	new THREE.PlaneGeometry(simulationSize.width, simulationSize.height),
-	navigationRenderMaterial
-);
-navigationMesh.position.set(simulationSize.width / 2, -simulationSize.height / 2, 1);
-scene.add(navigationMesh);
+const navigationMap = createNavigationMap(nativeSize, COARSE_MAP_DOWNSCALE, coarseMap.computeTarget.texture, interestPoints[0]);
+// scene.add(navigationMap.mesh);
 
 function frameRequestCallback() {
 	coarseMap.compute(renderer);
-
-	// Compute navigation field into target's texture
-	renderer.setRenderTarget(navigationComputeTarget);
-	navigationPass.render(renderer);
+	navigationMap.compute(renderer);
 
 	// Resize camera and renderer according to current canvas size
-	resize(renderer, camera, simulationSize);
+	resize(renderer, camera, nativeSize);
 
 	// Render world
 	renderer.setRenderTarget(null);
