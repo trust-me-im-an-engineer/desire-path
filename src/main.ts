@@ -3,13 +3,11 @@ import { FullScreenQuad } from "three/addons/postprocessing/Pass.js";
 import type { InterestPoint } from "./interest-points";
 import { resize } from "./viewport";
 
+import { createCoarseMap } from "./coarse-map/coarse-map";
 import navigationComputeFragmentShader from './shaders/navigation/compute/navigation-compute.frag?raw';
 import navigationComputeVertexShader from './shaders/navigation/compute/navigation-compute.vert?raw';
 import navigationRenderFragmentShader from './shaders/navigation/render/navigation-render.frag?raw';
 import navigationRenderVertexShader from './shaders/navigation/render/navigation-render.vert?raw';
-
-import coarseMapFragmentShader from './shaders/coarse-map/coarse-map.frag?raw';
-import coarseMapVertexShader from './shaders/coarse-map/coarse-map.vert?raw';
 
 const COARSE_MAP_DOWNSCALE = 8;
 
@@ -54,47 +52,12 @@ for (const point of interestPoints) {
 }
 scene.add(interestPointsGroup);
 
-// Coarse map is 1/4th of native simulation resolution.
-// It combines base terrain with wear map.
-const coarseMapRenderTarget = new THREE.WebGLRenderTarget(
-	Math.floor(simulationSize.width / COARSE_MAP_DOWNSCALE),
-	Math.floor(simulationSize.height / COARSE_MAP_DOWNSCALE),
-	{
-		format: THREE.RedFormat,
-		type: THREE.FloatType,
-		minFilter: THREE.NearestFilter,
-		magFilter: THREE.NearestFilter,
-		depthBuffer: false,
-		stencilBuffer: false,
-		generateMipmaps: false,
-		colorSpace: THREE.NoColorSpace,
-	}
-);
-
-const coarseMapShaderMaterial = new THREE.RawShaderMaterial({
-	glslVersion: THREE.GLSL3,
-
-	defines: {
-		COARSE_MAP_DOWNSCALE,
-	},
-
-	uniforms: {
-		uDownscale: { value: COARSE_MAP_DOWNSCALE },
-		uTerrainTexture: { value: terrainTexture },
-		// uWearMap: { value: wearTexture },
-		// uInterestPoints: { value: interestPoints },
-	},
-
-	vertexShader: coarseMapVertexShader,
-	fragmentShader: coarseMapFragmentShader,
-});
-
-const coarseMapPass = new FullScreenQuad(coarseMapShaderMaterial);
+const coarseMap = createCoarseMap(simulationSize, COARSE_MAP_DOWNSCALE, terrainTexture);
 
 // Render for debugging
 const coarseMapMesh = new THREE.Mesh(
 	new THREE.PlaneGeometry(simulationSize.width, simulationSize.height),
-	new THREE.MeshBasicMaterial({ map: coarseMapRenderTarget.texture })
+	new THREE.MeshBasicMaterial({ map: coarseMap.renderTarget.texture })
 );
 coarseMapMesh.position.set(simulationSize.width / 2, -simulationSize.height / 2, 4);
 scene.add(coarseMapMesh);
@@ -157,8 +120,8 @@ scene.add(navigationMesh);
 
 function frameRequestCallback() {
 	// Compute coarse map
-	renderer.setRenderTarget(coarseMapRenderTarget);
-	coarseMapPass.render(renderer);
+	renderer.setRenderTarget(coarseMap.renderTarget);
+	coarseMap.pass.render(renderer);
 
 	// Compute navigation field into target's texture
 	renderer.setRenderTarget(navigationComputeTarget);
