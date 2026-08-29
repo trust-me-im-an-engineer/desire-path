@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { FullScreenQuad } from "three/addons/postprocessing/Pass.js";
-import type { InterestPoint } from "./interest-points";
+import { createInterestPointsGroup, type InterestPoint } from "./interest-points";
 import { resize } from "./viewport";
 
 import { createCoarseMap } from "./coarse-map/coarse-map";
@@ -23,7 +23,7 @@ camera.top = 0;
 camera.position.z = 100;
 camera.updateProjectionMatrix();
 
-const terrainTexture = await new THREE.TextureLoader().loadAsync("assets/5.png");
+const terrainTexture = await new THREE.TextureLoader().loadAsync("assets/2.png");
 terrainTexture.generateMipmaps = false;
 terrainTexture.colorSpace = THREE.SRGBColorSpace;
 
@@ -41,20 +41,12 @@ const interestPoints: readonly InterestPoint[] = [
 	{ position: new THREE.Vector2(800, 264), weight: 12 },
 ];
 
-const interestPointsGroup = new THREE.Group();
-for (const point of interestPoints) {
-	const pointMesh = new THREE.Mesh(
-		new THREE.CircleGeometry(point.weight),
-		new THREE.MeshBasicMaterial({ color: 0xd93d2b })
-	);
-	pointMesh.position.set(point.position.x, -point.position.y, 2);
-	interestPointsGroup.add(pointMesh);
-}
+const interestPointsGroup = createInterestPointsGroup(interestPoints);
 scene.add(interestPointsGroup);
 
 const coarseMap = createCoarseMap(simulationSize, COARSE_MAP_DOWNSCALE, terrainTexture);
 // Render coarse map for debug
-scene.add(coarseMap.mesh);
+// scene.add(coarseMap.mesh);
 
 // Compute navigation field to single-channel target of simulationSize
 const navigationComputeTarget = new THREE.WebGLRenderTarget(
