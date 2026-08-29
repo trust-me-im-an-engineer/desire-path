@@ -3,10 +3,15 @@ import { FullScreenQuad } from "three/addons/postprocessing/Pass.js";
 import type { InterestPoint } from "./interest-points";
 import { resize } from "./viewport";
 
-import navigationComputeFragmentShader from './shaders/navigation-compute.frag?raw';
-import navigationComputeVertexShader from './shaders/navigation-compute.vert?raw';
-import navigationRenderFragmentShader from './shaders/navigation-render.frag?raw';
-import navigationRenderVertexShader from './shaders/navigation-render.vert?raw';
+import navigationComputeFragmentShader from './shaders/navigation/compute/navigation-compute.frag?raw';
+import navigationComputeVertexShader from './shaders/navigation/compute/navigation-compute.vert?raw';
+import navigationRenderFragmentShader from './shaders/navigation/render/navigation-render.frag?raw';
+import navigationRenderVertexShader from './shaders/navigation/render/navigation-render.vert?raw';
+
+import coarseMapFragmentShader from './shaders/coarse-map/coarse-map.frag?raw';
+import coarseMapVertexShader from './shaders/coarse-map/coarse-map.vert?raw';
+
+const COARSE_MAP_DOWNSCALE = 8;
 
 const canvas = <HTMLCanvasElement>document.getElementById("simulationCanvas");
 
@@ -20,7 +25,8 @@ camera.top = 0;
 camera.position.z = 100;
 camera.updateProjectionMatrix();
 
-const terrainTexture = await new THREE.TextureLoader().loadAsync("assets/2.png");
+const terrainTexture = await new THREE.TextureLoader().loadAsync("assets/5.png");
+terrainTexture.generateMipmaps = false;
 terrainTexture.colorSpace = THREE.SRGBColorSpace;
 
 const simulationSize = new THREE.Vector2(terrainTexture.width, terrainTexture.height);
@@ -48,6 +54,51 @@ for (const point of interestPoints) {
 }
 scene.add(interestPointsGroup);
 
+// Coarse map is 1/4th of native simulation resolution.
+// It combines base terrain with wear map.
+const coarseMapRenderTarget = new THREE.WebGLRenderTarget(
+	Math.floor(simulationSize.width / COARSE_MAP_DOWNSCALE),
+	Math.floor(simulationSize.height / COARSE_MAP_DOWNSCALE),
+	{
+		format: THREE.RedFormat,
+		type: THREE.FloatType,
+		minFilter: THREE.NearestFilter,
+		magFilter: THREE.NearestFilter,
+		depthBuffer: false,
+		stencilBuffer: false,
+		generateMipmaps: false,
+		colorSpace: THREE.NoColorSpace,
+	}
+);
+
+const coarseMapShaderMaterial = new THREE.RawShaderMaterial({
+	glslVersion: THREE.GLSL3,
+
+	defines: {
+		COARSE_MAP_DOWNSCALE,
+	},
+
+	uniforms: {
+		uDownscale: { value: COARSE_MAP_DOWNSCALE },
+		uTerrainTexture: { value: terrainTexture },
+		// uWearMap: { value: wearTexture },
+		// uInterestPoints: { value: interestPoints },
+	},
+
+	vertexShader: coarseMapVertexShader,
+	fragmentShader: coarseMapFragmentShader,
+});
+
+const coarseMapPass = new FullScreenQuad(coarseMapShaderMaterial);
+
+// Render for debugging
+const coarseMapMesh = new THREE.Mesh(
+	new THREE.PlaneGeometry(simulationSize.width, simulationSize.height),
+	new THREE.MeshBasicMaterial({ map: coarseMapRenderTarget.texture })
+);
+coarseMapMesh.position.set(simulationSize.width / 2, -simulationSize.height / 2, 4);
+scene.add(coarseMapMesh);
+
 // Compute navigation field to single-channel target of simulationSize
 const navigationComputeTarget = new THREE.WebGLRenderTarget(
 	simulationSize.width,
@@ -60,6 +111,7 @@ const navigationComputeTarget = new THREE.WebGLRenderTarget(
 		depthBuffer: false,
 		stencilBuffer: false,
 		generateMipmaps: false,
+		colorSpace: THREE.NoColorSpace,
 	}
 );
 
@@ -70,6 +122,7 @@ const navigationComputeMaterial = new THREE.RawShaderMaterial({
 	uniforms: {
 		uInterestPointPosition: { value: interestPoints[0].position },
 		uSimulationSize: { value: simulationSize },
+		uTerrainTexture: { value: terrainTexture },
 	},
 
 	vertexShader: navigationComputeVertexShader,
@@ -103,6 +156,10 @@ navigationMesh.position.set(simulationSize.width / 2, -simulationSize.height / 2
 scene.add(navigationMesh);
 
 function frameRequestCallback() {
+	// Compute coarse map
+	renderer.setRenderTarget(coarseMapRenderTarget);
+	coarseMapPass.render(renderer);
+
 	// Compute navigation field into target's texture
 	renderer.setRenderTarget(navigationComputeTarget);
 	navigationPass.render(renderer);

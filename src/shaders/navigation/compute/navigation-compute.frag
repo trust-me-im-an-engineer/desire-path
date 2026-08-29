@@ -2,6 +2,7 @@ precision highp float;
 
 uniform vec2 uInterestPointPosition;
 uniform vec2 uSimulationSize;
+uniform sampler2D uTerrainTexture;
 
 out float outWeight;
 

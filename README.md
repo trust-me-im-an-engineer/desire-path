@@ -6,7 +6,7 @@ Agents spawn at points of interest and travel toward other points of interest. A
 
 Simulation runs via WebGL through three.js.
 
-A rough course map textue is calculated for each point of interest. Closer areas are brighter and further are darker. Calculation takes into account obstacles defined by the cost map and the terrain wearness. These calculations are performed on the GPU.The rough course map has a fixed resolution.
+An approximate navigation field textue is calculated for each point of interest. Closer areas are brighter and further are darker. Calculation takes into account obstacles defined by the cost map and the terrain wearness. Initial calculation uses dijkstra algorithm for presice navigation, each frame navigation field gets modified by GPU bidirectional relaxation to reflect new trails wearing down and old unused fading out.
 
 Each agent has a wold position, a target interest point, a direction and a speed. At each step it probabilistically chooses a new direction based on its previous direction and rough course map weights, tending towards both straight and easy-to-walk paths.
 
