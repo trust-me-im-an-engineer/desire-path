@@ -113,9 +113,7 @@ navigationMesh.position.set(simulationSize.width / 2, -simulationSize.height / 2
 scene.add(navigationMesh);
 
 function frameRequestCallback() {
-	// Compute coarse map
-	renderer.setRenderTarget(coarseMap.renderTarget);
-	coarseMap.pass.render(renderer);
+	coarseMap.compute(renderer);
 
 	// Compute navigation field into target's texture
 	renderer.setRenderTarget(navigationComputeTarget);

@@ -8,6 +8,7 @@ export type CoarseMap = {
 	renderTarget: THREE.WebGLRenderTarget,
 	pass: FullScreenQuad,
 	mesh: THREE.Mesh,
+	compute(renderer: THREE.WebGLRenderer): void;
 }
 
 export function createCoarseMap(simulationSize: THREE.Vector2, downscale: number, terrainTexture: THREE.Texture): CoarseMap {
@@ -46,16 +47,24 @@ export function createCoarseMap(simulationSize: THREE.Vector2, downscale: number
 		fragmentShader: fragmentShader,
 	});
 
+	const pass = new FullScreenQuad(coarseMapShaderMaterial);
+
 	// Render for debugging
 	const mesh = new THREE.Mesh(
 		new THREE.PlaneGeometry(simulationSize.width, simulationSize.height),
-		new THREE.MeshBasicMaterial({ map: renderTarget.texture })
+		new THREE.MeshBasicMaterial({ map: renderTarget.texture }),
 	);
 	mesh.position.set(simulationSize.width / 2, -simulationSize.height / 2, 4);
 
+	const compute = function (renderer: THREE.WebGLRenderer) {
+		renderer.setRenderTarget(renderTarget);
+		pass.render(renderer);
+	};
+
 	return {
 		renderTarget: renderTarget,
-		pass: new FullScreenQuad(coarseMapShaderMaterial),
+		pass: pass,
 		mesh: mesh,
+		compute: compute,
 	}
 }
