@@ -41,8 +41,8 @@ terrainMesh.position.set(simulationResolution.native.width / 2, -simulationResol
 scene.add(terrainMesh);
 
 const interestPoints: readonly InterestPoint[] = [
-	new InterestPoint(new THREE.Vector2(200, 270), 12, simulationResolution.downscaleFactor),
-	new InterestPoint(new THREE.Vector2(800, 264), 12, simulationResolution.downscaleFactor),
+	new InterestPoint(new THREE.Vector2(200, 270), 12, simulationResolution),
+	new InterestPoint(new THREE.Vector2(800, 264), 12, simulationResolution),
 ];
 
 const interestPointsGroup = createInterestPointsGroup(interestPoints);
@@ -52,14 +52,52 @@ const coarseMap = new CoarseMap(simulationResolution, terrainTexture);
 // scene.add(coarseMap.mesh);
 
 const navigationMap = new NavigationMap(simulationResolution, coarseMap.computeTarget.texture, interestPoints[0]);
-scene.add(navigationMap.mesh);
+// scene.add(navigationMap.mesh);
 
 coarseMap.compute(renderer);
 const coarseMapArray = coarseMap.toArray(renderer);
 
 const navigationMapArray = dijkstra(interestPoints[0].downscaledPosition, coarseMapArray, simulationResolution);
 
-navigationMap.compute(renderer);
+const navigationMapTexture = new THREE.DataTexture(
+	navigationMapArray,
+	simulationResolution.downscaled.width,
+	simulationResolution.downscaled.height,
+	THREE.RedFormat,
+	THREE.FloatType,
+);
+navigationMapTexture.needsUpdate = true;
+
+import renderFragmentShader from './navigation-map/render/navigation-render.frag?raw';
+import renderVertexShader from './navigation-map/render/navigation-render.vert?raw';
+
+// Render computed navigation field texture using its channel as transparency
+const renderMaterial = new THREE.RawShaderMaterial({
+	glslVersion: THREE.GLSL3,
+
+	uniforms: {
+		uNavigation: {
+			value: navigationMapTexture,
+		},
+	},
+
+	vertexShader: renderVertexShader,
+	fragmentShader: renderFragmentShader,
+
+	transparent: true,
+	depthWrite: false,
+});
+
+const navigationMapMesh = new THREE.Mesh(
+	new THREE.PlaneGeometry(simulationResolution.native.width, simulationResolution.native.height),
+	renderMaterial,
+);
+navigationMapMesh.position.set(
+	simulationResolution.native.width / 2,
+	-simulationResolution.native.height / 2,
+	3,
+);
+scene.add(navigationMapMesh);
 
 function frameRequestCallback() {
 	// Resize camera and renderer according to current canvas size

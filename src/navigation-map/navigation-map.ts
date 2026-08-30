@@ -159,7 +159,7 @@ export function dijkstra(point: THREE.Vector2, map: Float32Array, simulationReso
 					distance *= Math.SQRT2;
 				}
 
-				const edgeCost = distance * (1 / currentWeight + 1 / nextWeight);
+				const edgeCost = distance * ((1 / currentWeight + 1 / nextWeight) << 7);
 
 				const candidate = Math.min(UNREACHABLE, current.cost + edgeCost);
 
