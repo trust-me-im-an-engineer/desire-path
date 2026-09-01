@@ -3,7 +3,7 @@ import * as THREE from "three";
 import { CoarseMap } from "./coarse-map/coarse-map";
 import { createInterestPointsGroup, InterestPoint } from "./interest-points";
 import { dijkstra, NavigationMap } from "./navigation-map/navigation-map";
-import type { SimulationResolution } from "./simulation-size";
+import { SimulationResolution } from "./simulation-size";
 import { resize } from "./viewport";
 
 const SIMULATION_DOWNSCALE_FACTOR = 8;
@@ -24,14 +24,11 @@ const terrainTexture = await new THREE.TextureLoader().loadAsync("assets/2.png")
 terrainTexture.generateMipmaps = false;
 terrainTexture.colorSpace = THREE.SRGBColorSpace;
 
-const simulationResolution: SimulationResolution = {
-	native: new THREE.Vector2(terrainTexture.width, terrainTexture.height),
-	downscaled: new THREE.Vector2(
-		Math.floor(terrainTexture.width / SIMULATION_DOWNSCALE_FACTOR),
-		Math.floor(terrainTexture.height / SIMULATION_DOWNSCALE_FACTOR),
-	),
-	downscaleFactor: SIMULATION_DOWNSCALE_FACTOR,
-};
+const simulationResolution = new SimulationResolution(
+	terrainTexture.width,
+	terrainTexture.height,
+	SIMULATION_DOWNSCALE_FACTOR,
+);
 
 const terrainMesh = new THREE.Mesh(
 	new THREE.PlaneGeometry(simulationResolution.native.width, simulationResolution.native.height),
