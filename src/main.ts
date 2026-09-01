@@ -2,7 +2,7 @@ import * as THREE from "three";
 
 import { CoarseMap } from "./coarse-map/coarse-map";
 import { createInterestPointsGroup, InterestPoint } from "./interest-points";
-import { dijkstra, NavigationMap } from "./navigation-map/navigation-map";
+import { dijkstra } from "./navigation-map/navigation-map";
 import { SimulationResolution } from "./simulation-size";
 import { resize } from "./viewport";
 
@@ -47,9 +47,6 @@ scene.add(interestPointsGroup);
 
 const coarseMap = new CoarseMap(simulationResolution, terrainTexture);
 scene.add(coarseMap.mesh);
-
-const navigationMap = new NavigationMap(simulationResolution, coarseMap.computeTarget.texture, interestPoints[0]);
-// scene.add(navigationMap.mesh);
 
 coarseMap.compute(renderer);
 const coarseMapArray = coarseMap.toArray(renderer);

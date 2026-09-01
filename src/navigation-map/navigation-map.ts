@@ -11,9 +11,10 @@ import renderFragmentShader from './render/navigation-render.frag?raw';
 import renderVertexShader from './render/navigation-render.vert?raw';
 
 export class NavigationMap {
-	public computeTarget: THREE.WebGLRenderTarget;
-	public pass: FullScreenQuad;
 	public mesh: THREE.Mesh;
+
+	private computeTarget: THREE.WebGLRenderTarget;
+	private pass: FullScreenQuad;
 
 	constructor(
 		simulationResolution: SimulationResolution,
