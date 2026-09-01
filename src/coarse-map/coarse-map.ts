@@ -6,9 +6,10 @@ import fragmentShader from './coarse-map.frag?raw';
 import vertexShader from './coarse-map.vert?raw';
 
 export class CoarseMap {
-	public computeTarget: THREE.WebGLRenderTarget;
-	public pass: FullScreenQuad;
 	public mesh: THREE.Mesh;
+
+	private computeTarget: THREE.WebGLRenderTarget;
+	private pass: FullScreenQuad;
 
 	constructor(
 		private simulationResolution: SimulationResolution,
