@@ -46,7 +46,7 @@ const interestPointsGroup = createInterestPointsGroup(interestPoints);
 scene.add(interestPointsGroup);
 
 const coarseMap = new CoarseMap(simulationResolution, terrainTexture);
-// scene.add(coarseMap.mesh);
+scene.add(coarseMap.mesh);
 
 const navigationMap = new NavigationMap(simulationResolution, coarseMap.computeTarget.texture, interestPoints[0]);
 // scene.add(navigationMap.mesh);
@@ -95,6 +95,23 @@ navigationMapMesh.position.set(
 	3,
 );
 scene.add(navigationMapMesh);
+
+function bindVisibilityToggle(id: string, object: THREE.Object3D): void {
+	const toggle = document.getElementById(id);
+	if (!(toggle instanceof HTMLInputElement)) {
+		throw new Error(`Visibility toggle #${id} not found`);
+	}
+
+	object.visible = toggle.checked;
+	toggle.addEventListener("change", () => {
+		object.visible = toggle.checked;
+	});
+}
+
+bindVisibilityToggle("showTerrain", terrainMesh);
+bindVisibilityToggle("showInterestPoints", interestPointsGroup);
+bindVisibilityToggle("showCoarseMap", coarseMap.mesh);
+bindVisibilityToggle("showNavigationMap", navigationMapMesh);
 
 function frameRequestCallback() {
 	// Resize camera and renderer according to current canvas size

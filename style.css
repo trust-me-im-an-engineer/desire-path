@@ -18,6 +18,15 @@ main {
   flex-wrap: wrap;
 }
 
+canvas {
+  display: block;
+  flex: 1 1 0;
+  min-width: 400px;
+  max-width: 100%;
+  min-height: 0;
+  max-height: 100%;
+}
+
 aside {
   flex: 0 0 300px;
   min-width: 0;
@@ -26,11 +35,8 @@ aside {
   padding: 10px;
 }
 
-canvas {
-  display: block;
-  flex: 1 1 0;
-  min-width: 400px;
-  max-width: 100%;
-  min-height: 0;
-  max-height: 100%;
+.debug-section {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
 }
