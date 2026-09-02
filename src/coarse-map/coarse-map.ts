@@ -1,37 +1,15 @@
 import * as THREE from "three";
-import { FullScreenQuad } from "three/addons/postprocessing/Pass.js";
 
+import { SimulationMap } from "../simulation-map";
 import type { SimulationResolution } from "../simulation-size";
 import fragmentShader from './coarse-map.frag?raw';
 import vertexShader from './coarse-map.vert?raw';
 
-export class CoarseMap {
-	public mesh: THREE.Mesh;
-
-	private computeTarget: THREE.WebGLRenderTarget;
-	private pass: FullScreenQuad;
-
+export class CoarseMap extends SimulationMap {
 	constructor(
 		private simulationResolution: SimulationResolution,
 		terrainTexture: THREE.Texture,
 	) {
-		// Coarse map uses the downscaled simulation resolution.
-		// It combines base terrain with wear map.
-		this.computeTarget = new THREE.WebGLRenderTarget(
-			simulationResolution.downscaled.width,
-			simulationResolution.downscaled.height,
-			{
-				format: THREE.RedFormat,
-				type: THREE.FloatType,
-				minFilter: THREE.NearestFilter,
-				magFilter: THREE.NearestFilter,
-				depthBuffer: false,
-				stencilBuffer: false,
-				generateMipmaps: false,
-				colorSpace: THREE.NoColorSpace,
-			}
-		);
-
 		const coarseMapShaderMaterial = new THREE.RawShaderMaterial({
 			glslVersion: THREE.GLSL3,
 
@@ -48,23 +26,12 @@ export class CoarseMap {
 			fragmentShader: fragmentShader,
 		});
 
-		this.pass = new FullScreenQuad(coarseMapShaderMaterial);
-
-		// Render for debugging
-		this.mesh = new THREE.Mesh(
-			new THREE.PlaneGeometry(simulationResolution.native.width, simulationResolution.native.height),
-			new THREE.MeshBasicMaterial({ map: this.computeTarget.texture }),
-		);
-		this.mesh.position.set(
-			simulationResolution.native.width / 2,
-			-simulationResolution.native.height / 2,
+		super(
+			simulationResolution,
+			coarseMapShaderMaterial,
+			texture => new THREE.MeshBasicMaterial({ map: texture }),
 			2,
 		);
-	}
-
-	compute(renderer: THREE.WebGLRenderer): void {
-		renderer.setRenderTarget(this.computeTarget);
-		this.pass.render(renderer);
 	}
 
 	toArray(renderer: THREE.WebGLRenderer): Float32Array {
