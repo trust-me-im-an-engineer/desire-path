@@ -121,6 +121,7 @@ bindVisibilityToggle("showTerrain", terrainMesh);
 bindVisibilityToggle("showInterestPoints", interestPointsGroup);
 bindVisibilityToggle("showCoarseMap", coarseMap.mesh);
 bindVisibilityToggle("showNavigationMap", navigationMapMesh);
+bindVisibilityToggle("showAgents", agents.points);
 
 function frameRequestCallback() {
 	// Resize camera and renderer according to current canvas size
