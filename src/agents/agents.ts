@@ -45,48 +45,34 @@ export class Agents {
 		staticTexture.colorSpace = THREE.NoColorSpace;
 		staticTexture.needsUpdate = true;
 
-		// Initialize transform texture with position of 0th interest point and zero velocity
-		const transformTextureData = new Float32Array(4 * TEXTURES_WIDTH ** 2);
-		for (let i = 0; i < transformTextureData.length; i += 4) {
-			transformTextureData[i] = interestPoints[0].nativePosition.x;
-			transformTextureData[i + 1] = interestPoints[0].nativePosition.y;
-			transformTextureData[i + 2] = 0.0;
-			transformTextureData[i + 3] = 0.0;
+		// Initialize state texture with position.xy, direction and destination index
+		// Position = 0th interest point
+		// Direction and destination index = 0
+		const stateTextureData = new Float32Array(4 * TEXTURES_WIDTH ** 2);
+		for (let i = 0; i < stateTextureData.length; i += 4) {
+			stateTextureData[i] = interestPoints[0].nativePosition.x;
+			stateTextureData[i + 1] = interestPoints[0].nativePosition.y;
+			stateTextureData[i + 2] = 0.0;
+			stateTextureData[i + 3] = 0.0;
 		}
-		const transformTexture = new THREE.DataTexture(
-			transformTextureData,
+		const stateTexture = new THREE.DataTexture(
+			stateTextureData,
 			TEXTURES_WIDTH,
 			TEXTURES_WIDTH,
 			THREE.RGBAFormat,
 			THREE.FloatType,
 		);
-		transformTexture.minFilter = THREE.NearestFilter;
-		transformTexture.magFilter = THREE.NearestFilter;
-		transformTexture.generateMipmaps = false;
-		transformTexture.colorSpace = THREE.NoColorSpace;
-		transformTexture.needsUpdate = true;
+		stateTexture.minFilter = THREE.NearestFilter;
+		stateTexture.magFilter = THREE.NearestFilter;
+		stateTexture.generateMipmaps = false;
+		stateTexture.colorSpace = THREE.NoColorSpace;
+		stateTexture.needsUpdate = true;
 
-		// Initialize destination texture with 0th interest point destination
-		const destinationTextureData = new Float32Array(TEXTURES_WIDTH ** 2);
-		const destinationTexture = new THREE.DataTexture(
-			destinationTextureData,
-			TEXTURES_WIDTH,
-			TEXTURES_WIDTH,
-			THREE.RedFormat,
-			THREE.FloatType,
-		);
-		destinationTexture.minFilter = THREE.NearestFilter;
-		destinationTexture.magFilter = THREE.NearestFilter;
-		destinationTexture.generateMipmaps = false;
-		destinationTexture.colorSpace = THREE.NoColorSpace;
-		destinationTexture.needsUpdate = true;
-
-		// One render target with 2 attached textures
+		// One render target with one state texture
 		this.computeTarget = new THREE.WebGLRenderTarget(
 			TEXTURES_WIDTH,
 			TEXTURES_WIDTH,
 			{
-				count: 2,
 				minFilter: THREE.NearestFilter,
 				magFilter: THREE.NearestFilter,
 				depthBuffer: false,
@@ -96,29 +82,19 @@ export class Agents {
 			},
 		);
 
-		const transform = this.computeTarget.textures[0];
-		transform.format = THREE.RGBAFormat;
-		transform.type = THREE.FloatType;
+		const state = this.computeTarget.texture;
+		state.format = THREE.RGBAFormat;
+		state.type = THREE.FloatType;
 
-		const destination = this.computeTarget.textures[1];
-		destination.format = THREE.RedFormat;
-		destination.type = THREE.FloatType;
-
-		// Initialization needed before copying data textures to render target
+		// Initialization needed before copying data texture to render target
 		renderer.initRenderTarget(this.computeTarget);
 
 		renderer.copyTextureToTexture(
-			transformTexture,
-			this.computeTarget.textures[0],
+			stateTexture,
+			this.computeTarget.texture,
 		);
 
-		renderer.copyTextureToTexture(
-			destinationTexture,
-			this.computeTarget.textures[1],
-		);
-
-		transformTexture.dispose();
-		destinationTexture.dispose();
+		stateTexture.dispose();
 
 		const geometry = new THREE.BufferGeometry();
 		geometry.setDrawRange(0, count);
@@ -129,8 +105,8 @@ export class Agents {
 				glslVersion: THREE.GLSL3,
 
 				uniforms: {
-					uTransformTexture: {
-						value: this.computeTarget.textures[0],
+					uStateTexture: {
+						value: this.computeTarget.texture,
 					},
 				},
 
