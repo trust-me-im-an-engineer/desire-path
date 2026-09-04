@@ -7,8 +7,7 @@ type RenderMaterialFactory = (texture: THREE.Texture) => THREE.Material;
 
 export abstract class SimulationMap {
 	public readonly mesh: THREE.Mesh;
-
-	protected readonly computeTarget: THREE.WebGLRenderTarget;
+	public readonly computeTarget: THREE.WebGLRenderTarget;
 
 	private readonly pass: FullScreenQuad;
 

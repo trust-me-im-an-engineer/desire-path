@@ -261,8 +261,13 @@ The debug renderer selects a group and channel, treats values near `UNREACHABLE`
 
 Support up to 10,000 agents with GPU state textures. Use square targets sized to `ceil(sqrt(agentCount))`:
 
-- Dynamic ping-pong RGBA32F state: `position.xy`, `direction.xy`.
-- Static RGBA32F metadata: `baseSpeed`, `targetIndex`, `randomSeed`, reserved value.
+- Dynamic ping-pong RGBA32F movement state: `position.xy`, `direction.xy`.
+- Dynamic ping-pong R32F destination state: `targetIndex`. Although this value is logically an integer, store it as a float because indices up to 20 are represented exactly and a float attachment keeps the MRT update path simple.
+- Static RG32F metadata: `randomSeed`, `baseSpeed`. RGBA32F may be used as a compatibility fallback if RG32F texture support is problematic on a target device.
+
+Update both dynamic textures in one multiple-render-target (MRT) agent pass. Each fragment invocation writes the movement state and destination index for the same agent texel, and the two attachments ping-pong together atomically.
+
+Do not store destination coordinates per agent. Store point-of-interest position, radius, and selection weight once in a shared uniform table or small lookup texture, and resolve those values from `targetIndex`. With at most 20 points, a fixed uniform table with a switch-based lookup is sufficient and avoids duplicating identical point data across thousands of agents.
 
 Pixels beyond `agentCount` are inactive. Render agents with one points/instanced draw that fetches state by agent index.
 

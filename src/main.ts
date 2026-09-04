@@ -62,6 +62,7 @@ const navigationMapTexture = new THREE.DataTexture(
 );
 navigationMapTexture.needsUpdate = true;
 
+import { Agents } from "./agents/agents";
 import renderFragmentShader from './navigation-map/render/navigation-render.frag?raw';
 import renderVertexShader from './navigation-map/render/navigation-render.vert?raw';
 
@@ -92,6 +93,17 @@ navigationMapMesh.position.set(
 	3,
 );
 scene.add(navigationMapMesh);
+
+const agents = new Agents(
+	simulationResolution,
+	terrainTexture,
+	coarseMap.computeTarget.texture,
+	interestPoints,
+	renderer,
+	5,
+	1,
+);
+scene.add(agents.points);
 
 function bindVisibilityToggle(id: string, object: THREE.Object3D): void {
 	const toggle = document.getElementById(id);
