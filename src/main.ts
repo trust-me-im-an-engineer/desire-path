@@ -127,6 +127,8 @@ function frameRequestCallback() {
 	// Resize camera and renderer according to current canvas size
 	resize(renderer, camera, simulationResolution);
 
+	agents.compute(renderer);
+
 	// Render world
 	renderer.setRenderTarget(null);
 	renderer.render(scene, camera);

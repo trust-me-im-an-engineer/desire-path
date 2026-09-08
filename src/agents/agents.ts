@@ -1,10 +1,14 @@
 import * as THREE from "three";
 
+import { FullScreenQuad } from "three/addons/postprocessing/Pass.js";
 import { InterestPoint } from "../interest-points";
 import type { SimulationResolution } from "../simulation-size";
 
 import renderFragmentShader from './render/agents-render.frag?raw';
 import renderVertexShader from './render/agents-render.vert?raw';
+
+import computeFragmentShader from './compute/agents-compute.frag?raw';
+import computeVertexShader from './compute/agents-compute.vert?raw';
 
 const TEXTURES_WIDTH = 128;
 const MIN_AGENT_SPEED = 0.5;
@@ -13,8 +17,11 @@ const MAX_AGENT_SPEED = 1.0;
 export class Agents {
 	public readonly points: THREE.Points;
 
-	private readonly computeTarget: THREE.WebGLRenderTarget;
-	// private readonly pass: FullScreenQuad;
+	private computeTargetRead: THREE.WebGLRenderTarget;
+	private computeTargetWrite: THREE.WebGLRenderTarget;
+	private readonly computeMaterial: THREE.RawShaderMaterial;
+	private readonly pass: FullScreenQuad;
+	private readonly renderMaterial: THREE.RawShaderMaterial;
 
 	constructor(
 		simulationResolution: SimulationResolution,
@@ -68,13 +75,17 @@ export class Agents {
 		stateTexture.colorSpace = THREE.NoColorSpace;
 		stateTexture.needsUpdate = true;
 
-		// One render target with one state texture
-		this.computeTarget = new THREE.WebGLRenderTarget(
+		this.computeTargetRead = new THREE.WebGLRenderTarget(
 			TEXTURES_WIDTH,
 			TEXTURES_WIDTH,
 			{
+				format: THREE.RGBAFormat,
+				type: THREE.FloatType,
+				internalFormat: "RGBA32F",
+
 				minFilter: THREE.NearestFilter,
 				magFilter: THREE.NearestFilter,
+
 				depthBuffer: false,
 				stencilBuffer: false,
 				generateMipmaps: false,
@@ -82,45 +93,75 @@ export class Agents {
 			},
 		);
 
-		const state = this.computeTarget.texture;
-		state.format = THREE.RGBAFormat;
-		state.type = THREE.FloatType;
-
 		// Initialization needed before copying data texture to render target
-		renderer.initRenderTarget(this.computeTarget);
-
+		renderer.initRenderTarget(this.computeTargetRead);
 		renderer.copyTextureToTexture(
 			stateTexture,
-			this.computeTarget.texture,
+			this.computeTargetRead.texture,
 		);
-
 		stateTexture.dispose();
+
+		// Clone compute target for ping-pong simulation
+		this.computeTargetWrite = this.computeTargetRead.clone();
+
+		this.computeMaterial = new THREE.RawShaderMaterial({
+			glslVersion: THREE.GLSL3,
+
+			uniforms: {
+				uPreviousStateTexture: { value: this.computeTargetRead.texture },
+			},
+
+			vertexShader: computeVertexShader,
+			fragmentShader: computeFragmentShader,
+
+			depthWrite: false,
+			depthTest: false,
+		})
+
+		// Pass is a full screen quad for rendering subsequent passes for simulation
+		this.pass = new FullScreenQuad(this.computeMaterial);
+
+		this.renderMaterial = new THREE.RawShaderMaterial({
+			glslVersion: THREE.GLSL3,
+
+			uniforms: {
+				uStateTexture: {
+					value: this.computeTargetRead.texture,
+				},
+			},
+
+			vertexShader: renderVertexShader,
+			fragmentShader: renderFragmentShader,
+
+			transparent: true,
+			depthWrite: false,
+		})
 
 		const geometry = new THREE.BufferGeometry();
 		geometry.setDrawRange(0, count);
 
 		this.points = new THREE.Points(
 			geometry,
-			new THREE.RawShaderMaterial({
-				glslVersion: THREE.GLSL3,
-
-				uniforms: {
-					uStateTexture: {
-						value: this.computeTarget.texture,
-					},
-				},
-
-				vertexShader: renderVertexShader,
-				fragmentShader: renderFragmentShader,
-
-				transparent: true,
-				depthWrite: false,
-			}),
+			this.renderMaterial,
 		);
 
 		// Disable culling as this mesh is always on screen
 		this.points.frustumCulled = false;
 
 		this.points.position.z = depth;
+	}
+
+
+	public compute(renderer: THREE.WebGLRenderer): void {
+		renderer.setRenderTarget(this.computeTargetWrite);
+		this.pass.render(renderer);
+
+		// Current output becomes next frame's input
+		[this.computeTargetRead, this.computeTargetWrite] = [this.computeTargetWrite, this.computeTargetRead];
+
+		this.computeMaterial.uniforms.uPreviousStateTexture.value = this.computeTargetRead.texture;
+
+		this.renderMaterial.uniforms.uStateTexture.value =
+			this.computeTargetRead.texture;
 	}
 }
