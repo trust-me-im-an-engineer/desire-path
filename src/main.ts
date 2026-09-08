@@ -103,7 +103,7 @@ const agents = new Agents(
 	5,
 	1,
 );
-scene.add(agents.points);
+scene.add(agents.mesh);
 
 function bindVisibilityToggle(id: string, object: THREE.Object3D): void {
 	const toggle = document.getElementById(id);
@@ -121,7 +121,7 @@ bindVisibilityToggle("showTerrain", terrainMesh);
 bindVisibilityToggle("showInterestPoints", interestPointsGroup);
 bindVisibilityToggle("showCoarseMap", coarseMap.mesh);
 bindVisibilityToggle("showNavigationMap", navigationMapMesh);
-bindVisibilityToggle("showAgents", agents.points);
+bindVisibilityToggle("showAgents", agents.mesh);
 
 function frameRequestCallback() {
 	// Resize camera and renderer according to current canvas size

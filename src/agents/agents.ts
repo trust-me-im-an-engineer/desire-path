@@ -13,9 +13,11 @@ import computeVertexShader from './compute/agents-compute.vert?raw';
 const TEXTURES_WIDTH = 128;
 const MIN_AGENT_SPEED = 0.5;
 const MAX_AGENT_SPEED = 1.0;
+const AGENT_LENGTH = 15;
+const AGENT_WIDTH = 10;
 
 export class Agents {
-	public readonly points: THREE.Points;
+	public readonly mesh: THREE.Mesh;
 
 	private computeTargetRead: THREE.WebGLRenderTarget;
 	private computeTargetWrite: THREE.WebGLRenderTarget;
@@ -137,18 +139,26 @@ export class Agents {
 			depthWrite: false,
 		})
 
-		const geometry = new THREE.BufferGeometry();
-		geometry.setDrawRange(0, count);
+		const geometry = new THREE.InstancedBufferGeometry();
+		geometry.setAttribute(
+			"position",
+			new THREE.Float32BufferAttribute([
+				-AGENT_LENGTH / 2, -AGENT_WIDTH / 2, 0,
+				AGENT_LENGTH / 2, 0, 0,
+				-AGENT_LENGTH / 2, AGENT_WIDTH / 2, 0,
+			], 3),
+		);
+		geometry.instanceCount = count;
 
-		this.points = new THREE.Points(
+		this.mesh = new THREE.Mesh(
 			geometry,
 			this.renderMaterial,
 		);
 
 		// Disable culling as this mesh is always on screen
-		this.points.frustumCulled = false;
+		this.mesh.frustumCulled = false;
 
-		this.points.position.z = depth;
+		this.mesh.position.z = depth;
 	}
 
 
