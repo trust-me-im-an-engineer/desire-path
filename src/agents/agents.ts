@@ -1,7 +1,7 @@
 import * as THREE from "three";
 
 import { FullScreenQuad } from "three/addons/postprocessing/Pass.js";
-import { InterestPoint } from "../interest-points";
+import { InterestPoint } from "../interest-points/interest-point";
 import type { SimulationResolution } from "../simulation-size";
 
 import renderFragmentShader from './render/agents-render.frag?raw';

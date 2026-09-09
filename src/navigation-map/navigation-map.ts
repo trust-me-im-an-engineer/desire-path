@@ -1,7 +1,7 @@
 import { Heap } from "heap-js";
 import * as THREE from "three";
 
-import { InterestPoint } from "../interest-points";
+import { InterestPoint } from "../interest-points/interest-point";
 import { SimulationMap } from "../simulation-map";
 import type { SimulationResolution } from "../simulation-size";
 

@@ -1,7 +1,8 @@
 import * as THREE from "three";
 
 import { CoarseMap } from "./coarse-map/coarse-map";
-import { createInterestPointsGroup, InterestPoint } from "./interest-points";
+import { InterestPoint } from "./interest-points/interest-point";
+import { InterestPoints } from "./interest-points/interest-points";
 import { dijkstra } from "./navigation-map/navigation-map";
 import { SimulationResolution } from "./simulation-size";
 import { resize } from "./viewport";
@@ -37,13 +38,11 @@ const terrainMesh = new THREE.Mesh(
 terrainMesh.position.set(simulationResolution.native.width / 2, -simulationResolution.native.height / 2);
 scene.add(terrainMesh);
 
-const interestPoints: readonly InterestPoint[] = [
+const interestPoints = new InterestPoints([
 	new InterestPoint(new THREE.Vector2(200, 270), 12, simulationResolution),
 	new InterestPoint(new THREE.Vector2(800, 264), 12, simulationResolution),
-];
-
-const interestPointsGroup = createInterestPointsGroup(interestPoints);
-scene.add(interestPointsGroup);
+]);
+scene.add(interestPoints.group);
 
 const coarseMap = new CoarseMap(simulationResolution, terrainTexture);
 scene.add(coarseMap.mesh);
@@ -51,7 +50,7 @@ scene.add(coarseMap.mesh);
 coarseMap.compute(renderer);
 const coarseMapArray = coarseMap.toArray(renderer);
 
-const navigationMapArray = dijkstra(interestPoints[0].downscaledPosition, coarseMapArray, simulationResolution);
+const navigationMapArray = dijkstra(interestPoints.points[0].downscaledPosition, coarseMapArray, simulationResolution);
 
 const navigationMapTexture = new THREE.DataTexture(
 	navigationMapArray,
@@ -98,7 +97,7 @@ const agents = new Agents(
 	simulationResolution,
 	terrainTexture,
 	coarseMap.computeTarget.texture,
-	interestPoints,
+	interestPoints.points,
 	renderer,
 	5,
 	3,
@@ -118,7 +117,7 @@ function bindVisibilityToggle(id: string, object: THREE.Object3D): void {
 }
 
 bindVisibilityToggle("showTerrain", terrainMesh);
-bindVisibilityToggle("showInterestPoints", interestPointsGroup);
+bindVisibilityToggle("showInterestPoints", interestPoints.group);
 bindVisibilityToggle("showCoarseMap", coarseMap.mesh);
 bindVisibilityToggle("showNavigationMap", navigationMapMesh);
 bindVisibilityToggle("showAgents", agents.mesh);
