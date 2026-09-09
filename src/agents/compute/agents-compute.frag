@@ -2,6 +2,10 @@ precision highp float;
 
 uniform sampler2D uPreviousStateTexture;
 uniform sampler2D uPropertiesTexture;
+
+uniform sampler2D uInterestPointsTexture;
+uniform float uInterestPointsTotalWeight;
+
 uniform ivec2 uSimulationResolution;
 uniform sampler2D uTerrainTexture;
 
@@ -26,7 +30,7 @@ vec4 packState(State state) {
 	return vec4(state.position, state.direction, float(state.destinationIndex));
 }
 
-// Properties represent static agent properties
+// Properties represents static agent properties
 struct Properties {
 	float seed;
 	float speed;
@@ -39,13 +43,43 @@ Properties readProperties(ivec2 textureCoord) {
 	return Properties(packed.x, packed.y);
 }
 
+// InterestPoint represent interest point properties
+struct InterestPoint {
+	vec2 position;
+	float weight;
+	int index;
+};
+
+InterestPoint readInterestPoint(int index) {
+	ivec2 textureCoord = ivec2(index, 0);
+
+	vec3 packed = texelFetch(uInterestPointsTexture, textureCoord, 0).xyz;
+
+	return InterestPoint(packed.xy, packed.z, index);
+}
+
+// chooseNewInterestPoint chooses new interest point randomly according to weights.
+InterestPoint chooseNewInterestPoint(InterestPoint old) {
+
+	return old;
+}
+
 void main() {
 	ivec2 coord = ivec2(gl_FragCoord.xy);
 
 	State state = readState(coord);
 	Properties properties = readProperties(coord);
+	InterestPoint interestPoint = readInterestPoint(state.destinationIndex);
 
-	state.position += vec2(cos(state.direction), -sin(state.direction)) * properties.speed;
+	if(distance(state.position, interestPoint.position) < interestPoint.weight) {
+		interestPoint = chooseNewInterestPoint(interestPoint);
+		state.destinationIndex = interestPoint.index;
+	}
+
+	vec2 directionVec = (interestPoint.position - state.position);
+	state.direction = atan(directionVec.y, directionVec.x);
+
+	state.position += vec2(cos(state.direction), sin(state.direction)) * properties.speed;
 
 	outState = packState(state);
 }

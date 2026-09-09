@@ -2,7 +2,7 @@ import * as THREE from "three";
 
 import { InterestPoint } from "./interest-point";
 
-export const TEXTURE_WIDTH = 8;
+export const MAX_COUNT = 32;
 
 export class InterestPoints {
 	public readonly group: THREE.Group;
@@ -21,19 +21,20 @@ export class InterestPoints {
 			this.group.add(pointMesh);
 		}
 
-		const data = new Float32Array(3 * TEXTURE_WIDTH ** 2);
-		for (let i = 0; i < data.length; i += 3) {
-			data[i] = points[0].nativePosition.x;
-			data[i + 1] = points[0].nativePosition.y;
-			data[i + 2] = points[0].weight;
+		const data = new Float32Array(3 * MAX_COUNT);
+		for (let i = 0; i < points.length; i++) {
+			data[3 * i] = points[i].nativePosition.x;
+			data[3 * i + 1] = points[i].nativePosition.y;
+			data[3 * i + 2] = points[i].weight;
 		}
 		this.texture = new THREE.DataTexture(
 			data,
-			TEXTURE_WIDTH,
-			TEXTURE_WIDTH,
+			MAX_COUNT,
+			1,
 			THREE.RGBFormat,
 			THREE.FloatType,
 		)
+		this.texture.internalFormat = "RGB32F";
 		this.texture.minFilter = THREE.NearestFilter;
 		this.texture.magFilter = THREE.NearestFilter;
 		this.texture.generateMipmaps = false;

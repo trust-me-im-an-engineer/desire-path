@@ -30,6 +30,7 @@ export class Agents {
 		terrainTexture: THREE.Texture,
 		coarseMap: THREE.Texture,
 		interestPoints: readonly InterestPoint[],
+		interestPointsTexture: THREE.Texture,
 		renderer: THREE.WebGLRenderer,
 		depth: number,
 		public count: number,
@@ -62,7 +63,7 @@ export class Agents {
 			stateTextureData[i] = interestPoints[0].nativePosition.x;
 			stateTextureData[i + 1] = interestPoints[0].nativePosition.y;
 			stateTextureData[i + 2] = 0.0;
-			stateTextureData[i + 3] = 0.0;
+			stateTextureData[i + 3] = 1.0;
 		}
 		const stateTexture = new THREE.DataTexture(
 			stateTextureData,
@@ -112,6 +113,7 @@ export class Agents {
 			uniforms: {
 				uPreviousStateTexture: { value: this.computeTargetRead.texture },
 				uPropertiesTexture: { value: propertiesTexture },
+				uInterestPointsTexture: { value: interestPointsTexture },
 				uSimulationResolution: { value: simulationResolution },
 				uTerrainTexture: { value: terrainTexture },
 			},

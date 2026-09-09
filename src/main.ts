@@ -98,6 +98,7 @@ const agents = new Agents(
 	terrainTexture,
 	coarseMap.computeTarget.texture,
 	interestPoints.points,
+	interestPoints.texture,
 	renderer,
 	5,
 	3,
