@@ -35,24 +35,24 @@ export class Agents {
 		public count: number,
 
 	) {
-		// Initialize static texture (seed + speed)
-		const staticTextureData = new Float32Array(2 * TEXTURES_WIDTH ** 2);
-		for (let i = 0; i < staticTextureData.length; i += 2) {
-			staticTextureData[i] = Math.random();
-			staticTextureData[i + 1] = MIN_AGENT_SPEED + Math.random() * (MAX_AGENT_SPEED - MIN_AGENT_SPEED);
+		// Initialize static properties texture (seed + speed)
+		const propertiesTextureData = new Float32Array(2 * TEXTURES_WIDTH ** 2);
+		for (let i = 0; i < propertiesTextureData.length; i += 2) {
+			propertiesTextureData[i] = Math.random();
+			propertiesTextureData[i + 1] = MIN_AGENT_SPEED + Math.random() * (MAX_AGENT_SPEED - MIN_AGENT_SPEED);
 		}
-		const staticTexture = new THREE.DataTexture(
-			staticTextureData,
+		const propertiesTexture = new THREE.DataTexture(
+			propertiesTextureData,
 			TEXTURES_WIDTH,
 			TEXTURES_WIDTH,
 			THREE.RGFormat,
 			THREE.FloatType,
 		);
-		staticTexture.minFilter = THREE.NearestFilter;
-		staticTexture.magFilter = THREE.NearestFilter;
-		staticTexture.generateMipmaps = false;
-		staticTexture.colorSpace = THREE.NoColorSpace;
-		staticTexture.needsUpdate = true;
+		propertiesTexture.minFilter = THREE.NearestFilter;
+		propertiesTexture.magFilter = THREE.NearestFilter;
+		propertiesTexture.generateMipmaps = false;
+		propertiesTexture.colorSpace = THREE.NoColorSpace;
+		propertiesTexture.needsUpdate = true;
 
 		// Initialize state texture with position.xy, direction and destination index
 		// Position = 0th interest point
@@ -111,6 +111,9 @@ export class Agents {
 
 			uniforms: {
 				uPreviousStateTexture: { value: this.computeTargetRead.texture },
+				uPropertiesTexture: { value: propertiesTexture },
+				uSimulationResolution: { value: simulationResolution },
+				uTerrainTexture: { value: terrainTexture },
 			},
 
 			vertexShader: computeVertexShader,

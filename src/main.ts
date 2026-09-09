@@ -101,7 +101,7 @@ const agents = new Agents(
 	interestPoints,
 	renderer,
 	5,
-	1,
+	3,
 );
 scene.add(agents.mesh);
 
