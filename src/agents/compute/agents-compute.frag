@@ -1,4 +1,5 @@
 precision highp float;
+precision highp int;
 
 uniform sampler2D uPreviousStateTexture;
 uniform sampler2D uPropertiesTexture;
@@ -58,10 +59,51 @@ InterestPoint readInterestPoint(int index) {
 	return InterestPoint(packed.xy, packed.z, index);
 }
 
-// chooseNewInterestPoint chooses new interest point randomly according to weights.
-InterestPoint chooseNewInterestPoint(InterestPoint old) {
+uint pcgHash(uint inputValue) {
+	uint state = inputValue * 747796405u + 2891336453u;
+	uint word = ((state >> ((state >> 28u) + 4u)) ^ state) *
+		277803737u;
 
-	return old;
+	return (word >> 22u) ^ word;
+}
+
+// random returns a deterministic pseudo-random value in the range [0.0, 1.0).
+float random(ivec2 agentCoord, Properties properties, State state) {
+	uint value = floatBitsToUint(properties.seed);
+
+	value ^= pcgHash(uint(agentCoord.x));
+	value ^= pcgHash(uint(agentCoord.y));
+	value ^= pcgHash(floatBitsToUint(state.position.x));
+	value ^= pcgHash(floatBitsToUint(state.position.y));
+	value ^= pcgHash(floatBitsToUint(state.direction));
+	value ^= pcgHash(uint(state.destinationIndex));
+
+	// Use 24 bits so conversion cannot round up to 1.0.
+	return float(pcgHash(value) >> 8u) *
+		(1.0f / 16777216.0f);
+}
+
+// chooseNewInterestPoint chooses new interest point randomly according to weights.
+InterestPoint chooseNewInterestPoint(InterestPoint oldInterestPoint, float rand) {
+	int i = 0;
+	InterestPoint interestPoint;
+	float collectedWeight = 0.0f;
+
+	int capacity = textureSize(uInterestPointsTexture, 0).x;
+
+	for (int i = 0; i < capacity; i++) {
+		if (collectedWeight >= rand * (uInterestPointsTotalWeight - oldInterestPoint.weight)) {
+			break;
+		}
+
+		interestPoint = readInterestPoint(i);
+
+		if (interestPoint.index != oldInterestPoint.index) {
+			collectedWeight += interestPoint.weight;
+		}
+	}
+
+	return interestPoint;
 }
 
 void main() {
@@ -71,8 +113,10 @@ void main() {
 	Properties properties = readProperties(coord);
 	InterestPoint interestPoint = readInterestPoint(state.destinationIndex);
 
-	if(distance(state.position, interestPoint.position) < interestPoint.weight) {
-		interestPoint = chooseNewInterestPoint(interestPoint);
+	float rand = random(ivec2(gl_FragCoord.xy), properties, state);
+
+	if (distance(state.position, interestPoint.position) < interestPoint.weight) {
+		interestPoint = chooseNewInterestPoint(interestPoint, rand);
 		state.destinationIndex = interestPoint.index;
 	}
 

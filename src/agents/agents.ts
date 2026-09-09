@@ -1,18 +1,18 @@
 import * as THREE from "three";
 
 import { FullScreenQuad } from "three/addons/postprocessing/Pass.js";
-import { InterestPoint } from "../interest-points/interest-point";
 import type { SimulationResolution } from "../simulation-size";
 
 import renderFragmentShader from './render/agents-render.frag?raw';
 import renderVertexShader from './render/agents-render.vert?raw';
 
+import { InterestPoints } from "../interest-points/interest-points";
 import computeFragmentShader from './compute/agents-compute.frag?raw';
 import computeVertexShader from './compute/agents-compute.vert?raw';
 
-const TEXTURES_WIDTH = 128;
-const MIN_AGENT_SPEED = 0.5;
-const MAX_AGENT_SPEED = 1.0;
+const TEXTURES_WIDTH = 1000;
+const MIN_AGENT_SPEED = 2.5;
+const MAX_AGENT_SPEED = 5.0;
 const AGENT_LENGTH = 15;
 const AGENT_WIDTH = 10;
 
@@ -29,8 +29,7 @@ export class Agents {
 		simulationResolution: SimulationResolution,
 		terrainTexture: THREE.Texture,
 		coarseMap: THREE.Texture,
-		interestPoints: readonly InterestPoint[],
-		interestPointsTexture: THREE.Texture,
+		interestPoints: InterestPoints,
 		renderer: THREE.WebGLRenderer,
 		depth: number,
 		public count: number,
@@ -60,8 +59,8 @@ export class Agents {
 		// Direction and destination index = 0
 		const stateTextureData = new Float32Array(4 * TEXTURES_WIDTH ** 2);
 		for (let i = 0; i < stateTextureData.length; i += 4) {
-			stateTextureData[i] = interestPoints[0].nativePosition.x;
-			stateTextureData[i + 1] = interestPoints[0].nativePosition.y;
+			stateTextureData[i] = interestPoints.points[0].nativePosition.x;
+			stateTextureData[i + 1] = interestPoints.points[0].nativePosition.y;
 			stateTextureData[i + 2] = 0.0;
 			stateTextureData[i + 3] = 1.0;
 		}
@@ -113,7 +112,10 @@ export class Agents {
 			uniforms: {
 				uPreviousStateTexture: { value: this.computeTargetRead.texture },
 				uPropertiesTexture: { value: propertiesTexture },
-				uInterestPointsTexture: { value: interestPointsTexture },
+
+				uInterestPointsTexture: { value: interestPoints.texture },
+				uInterestPointsTotalWeight: { value: interestPoints.totalWeight },
+
 				uSimulationResolution: { value: simulationResolution },
 				uTerrainTexture: { value: terrainTexture },
 			},

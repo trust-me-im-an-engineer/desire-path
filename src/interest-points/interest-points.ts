@@ -7,6 +7,7 @@ export const MAX_COUNT = 32;
 export class InterestPoints {
 	public readonly group: THREE.Group;
 	public readonly texture: THREE.Texture;
+	public readonly totalWeight: number;
 
 	constructor(
 		public points: InterestPoint[],
@@ -21,11 +22,15 @@ export class InterestPoints {
 			this.group.add(pointMesh);
 		}
 
+		this.totalWeight = 0;
+
 		const data = new Float32Array(3 * MAX_COUNT);
 		for (let i = 0; i < points.length; i++) {
 			data[3 * i] = points[i].nativePosition.x;
 			data[3 * i + 1] = points[i].nativePosition.y;
 			data[3 * i + 2] = points[i].weight;
+
+			this.totalWeight += points[i].weight;
 		}
 		this.texture = new THREE.DataTexture(
 			data,
