@@ -19,7 +19,7 @@ export class CoarseMap extends SimulationMap {
 			uniforms: {
 				uTerrainTexture: { value: terrainTexture },
 				// uWearMap: { value: wearTexture },
-				// uInterestPoints: { value: interestPoints },
+				// uDestinations: { value: destinations },
 			},
 
 			vertexShader: vertexShader,

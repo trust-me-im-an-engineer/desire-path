@@ -2,7 +2,7 @@ import * as THREE from "three";
 
 import type { SimulationResolution } from "../simulation-size";
 
-export class InterestPoint {
+export class Destination {
 	public downscaledPosition: THREE.Vector2;
 
 	constructor(

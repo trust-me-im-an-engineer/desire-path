@@ -4,8 +4,8 @@ precision highp int;
 uniform sampler2D uPreviousStateTexture;
 uniform sampler2D uPropertiesTexture;
 
-uniform sampler2D uInterestPointsTexture;
-uniform float uInterestPointsTotalWeight;
+uniform sampler2D uDestinationsTexture;
+uniform float uDestinationsTotalWeight;
 
 uniform ivec2 uSimulationResolution;
 uniform sampler2D uTerrainTexture;
@@ -44,19 +44,19 @@ Properties readProperties(ivec2 textureCoord) {
 	return Properties(packed.x, packed.y);
 }
 
-// InterestPoint represent interest point properties
-struct InterestPoint {
+// Destination represents destination properties
+struct Destination {
 	vec2 position;
 	float weight;
 	int index;
 };
 
-InterestPoint readInterestPoint(int index) {
+Destination readDestination(int index) {
 	ivec2 textureCoord = ivec2(index, 0);
 
-	vec3 packed = texelFetch(uInterestPointsTexture, textureCoord, 0).xyz;
+	vec3 packed = texelFetch(uDestinationsTexture, textureCoord, 0).xyz;
 
-	return InterestPoint(packed.xy, packed.z, index);
+	return Destination(packed.xy, packed.z, index);
 }
 
 uint pcgHash(uint inputValue) {
@@ -83,27 +83,27 @@ float random(ivec2 agentCoord, Properties properties, State state) {
 		(1.0f / 16777216.0f);
 }
 
-// chooseNewInterestPoint chooses new interest point randomly according to weights.
-InterestPoint chooseNewInterestPoint(InterestPoint oldInterestPoint, float rand) {
+// chooseNextDestination chooses a new destination randomly according to weights.
+Destination chooseNextDestination(Destination currentDestination, float rand) {
 	int i = 0;
-	InterestPoint interestPoint;
+	Destination destination;
 	float collectedWeight = 0.0f;
 
-	int capacity = textureSize(uInterestPointsTexture, 0).x;
+	int capacity = textureSize(uDestinationsTexture, 0).x;
 
 	for (int i = 0; i < capacity; i++) {
-		if (collectedWeight >= rand * (uInterestPointsTotalWeight - oldInterestPoint.weight)) {
+		if (collectedWeight >= rand * (uDestinationsTotalWeight - currentDestination.weight)) {
 			break;
 		}
 
-		interestPoint = readInterestPoint(i);
+		destination = readDestination(i);
 
-		if (interestPoint.index != oldInterestPoint.index) {
-			collectedWeight += interestPoint.weight;
+		if (destination.index != currentDestination.index) {
+			collectedWeight += destination.weight;
 		}
 	}
 
-	return interestPoint;
+	return destination;
 }
 
 void main() {
@@ -111,16 +111,16 @@ void main() {
 
 	State state = readState(coord);
 	Properties properties = readProperties(coord);
-	InterestPoint interestPoint = readInterestPoint(state.destinationIndex);
+	Destination destination = readDestination(state.destinationIndex);
 
 	float rand = random(ivec2(gl_FragCoord.xy), properties, state);
 
-	if (distance(state.position, interestPoint.position) < interestPoint.weight) {
-		interestPoint = chooseNewInterestPoint(interestPoint, rand);
-		state.destinationIndex = interestPoint.index;
+	if (distance(state.position, destination.position) < destination.weight) {
+		destination = chooseNextDestination(destination, rand);
+		state.destinationIndex = destination.index;
 	}
 
-	vec2 directionVec = (interestPoint.position - state.position);
+	vec2 directionVec = destination.position - state.position;
 	state.direction = atan(directionVec.y, directionVec.x);
 
 	state.position += vec2(cos(state.direction), sin(state.direction)) * properties.speed;

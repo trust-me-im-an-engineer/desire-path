@@ -1,7 +1,7 @@
 import { Heap } from "heap-js";
 import * as THREE from "three";
 
-import { InterestPoint } from "../interest-points/interest-point";
+import { Destination } from "../destinations/destination";
 import { SimulationMap } from "../simulation-map";
 import type { SimulationResolution } from "../simulation-size";
 
@@ -14,14 +14,14 @@ export class NavigationMap extends SimulationMap {
 	constructor(
 		simulationResolution: SimulationResolution,
 		coarseMapTexture: THREE.Texture,
-		point: InterestPoint,
+		destination: Destination,
 	) {
 		const computeMaterial = new THREE.RawShaderMaterial({
 			glslVersion: THREE.GLSL3,
 
 			uniforms: {
-				uInterestPointPosition: {
-					value: point.downscaledPosition,
+				uDestinationPosition: {
+					value: destination.downscaledPosition,
 				},
 				uTerrainTexture: { value: coarseMapTexture },
 			},
@@ -62,7 +62,7 @@ type HeapEntry = {
 };
 
 /**
- * Builds a row-major cost field leading away from `point`.
+ * Builds a row-major cost field leading away from `destination`.
  *
  * Terrain values are traversal speeds in [0, 1]. Zero is impassable, one has
  * no terrain penalty, and costs for intermediate values are proportional to
@@ -70,21 +70,21 @@ type HeapEntry = {
  *
  * Costs use native-pixel distance units.
  */
-export function dijkstra(point: THREE.Vector2, map: Float32Array, simulationResolution: SimulationResolution): Float32Array {
+export function dijkstra(destination: THREE.Vector2, map: Float32Array, simulationResolution: SimulationResolution): Float32Array {
 	const width = simulationResolution.downscaled.x;
 	const height = simulationResolution.downscaled.y;
 
 	const navigationMap = new Float32Array(map.length);
 	navigationMap.fill(UNREACHABLE);
 
-	const pointIndex = point.y * width + point.x;
-	if (map[pointIndex] === 0) {
+	const destinationIndex = destination.y * width + destination.x;
+	if (map[destinationIndex] === 0) {
 		return navigationMap;
 	}
 
-	navigationMap[pointIndex] = 0;
+	navigationMap[destinationIndex] = 0;
 	const queue = new Heap<HeapEntry>((a, b) => a.cost - b.cost);
-	queue.push({ index: pointIndex, cost: 0 });
+	queue.push({ index: destinationIndex, cost: 0 });
 
 	while (queue.length > 0) {
 		const current = queue.pop();

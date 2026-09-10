@@ -1,36 +1,36 @@
 import * as THREE from "three";
 
-import { InterestPoint } from "./interest-point";
+import { Destination } from "./destination";
 
 export const MAX_COUNT = 32;
 
-export class InterestPoints {
+export class Destinations {
 	public readonly group: THREE.Group;
 	public readonly texture: THREE.Texture;
 	public readonly totalWeight: number;
 
 	constructor(
-		public points: InterestPoint[],
+		public items: Destination[],
 	) {
 		this.group = new THREE.Group();
-		for (const point of points) {
-			const pointMesh = new THREE.Mesh(
-				new THREE.CircleGeometry(point.weight),
+		for (const destination of items) {
+			const destinationMesh = new THREE.Mesh(
+				new THREE.CircleGeometry(destination.weight),
 				new THREE.MeshBasicMaterial({ color: 0x00ff00 })
 			);
-			pointMesh.position.set(point.nativePosition.x, -point.nativePosition.y, 4);
-			this.group.add(pointMesh);
+			destinationMesh.position.set(destination.nativePosition.x, -destination.nativePosition.y, 4);
+			this.group.add(destinationMesh);
 		}
 
 		this.totalWeight = 0;
 
 		const data = new Float32Array(3 * MAX_COUNT);
-		for (let i = 0; i < points.length; i++) {
-			data[3 * i] = points[i].nativePosition.x;
-			data[3 * i + 1] = points[i].nativePosition.y;
-			data[3 * i + 2] = points[i].weight;
+		for (let i = 0; i < items.length; i++) {
+			data[3 * i] = items[i].nativePosition.x;
+			data[3 * i + 1] = items[i].nativePosition.y;
+			data[3 * i + 2] = items[i].weight;
 
-			this.totalWeight += points[i].weight;
+			this.totalWeight += items[i].weight;
 		}
 		this.texture = new THREE.DataTexture(
 			data,

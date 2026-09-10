@@ -1,6 +1,6 @@
 precision highp float;
 
-uniform vec2 uInterestPointPosition;
+uniform vec2 uDestinationPosition;
 uniform sampler2D uTerrainTexture;
 
 out float outWeight;
@@ -10,7 +10,7 @@ void main() {
 
     vec2 position = vec2(gl_FragCoord.x, simulationSize.y - gl_FragCoord.y);
 
-    float d = distance(position, uInterestPointPosition);
+    float d = distance(position, uDestinationPosition);
 
-    outWeight = d / length(max(uInterestPointPosition, simulationSize - uInterestPointPosition));
+    outWeight = d / length(max(uDestinationPosition, simulationSize - uDestinationPosition));
 }

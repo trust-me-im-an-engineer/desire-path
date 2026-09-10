@@ -12,14 +12,14 @@ This document is the implementation specification for terrain storage, navigatio
 - Traversal speed is the coarse grayscale value `g`. Traversal cost per unit distance is `1 / g`; `g == 0` is unreachable.
 - Exact navigation fields are computed with Dijkstra in a Web Worker at startup and after user painting.
 - Between exact rebuilds, GPU Bellman relaxation tracks gradual wear and grass regrowth in both directions: costs may decrease or increase.
-- Up to four destinations are packed into the RGBA channels of one navigation texture. Up to 20 points require five texture groups.
+- Up to four destinations are packed into the RGBA channels of one navigation texture. Up to 20 destinations require five texture groups.
 - Each RGBA navigation group receives exactly one relaxation pass per rendered simulation frame.
 - Agents never step from navigation cell to navigation cell. They move continuously by `speed * deltaTime`, steer using the coarse field, and retain floating-point positions.
 - Existing UI sliders are outside the first implementation and remain unused.
 
 ## 2. Coordinates and indexing
 
-The public/world convention remains top-left origin because interest points and the camera already use it:
+The public/world convention remains top-left origin because destinations and the camera already use it:
 
 ```text
 world x: rightward
@@ -191,14 +191,14 @@ Transfer `terrain.buffer`; do not attempt to reuse the detached buffer after pos
 
 ### Worker algorithm
 
-For each interest point:
+For each destination:
 
 1. Fill a `Float32Array(width * height)` with `UNREACHABLE`.
-2. Seed every passable coarse cell whose center lies within the interest point's radius with cost zero. Report a configuration error if the radius contains no passable coarse cell.
+2. Seed every passable coarse cell whose center lies within the destination's radius with cost zero. Report a configuration error if the radius contains no passable coarse cell.
 3. Run eight-neighbor Dijkstra with the exact edge formula above.
 4. Skip stale heap entries instead of implementing decrease-key.
 
-After all points are solved, pack up to four scalar fields into each RGBA group:
+After all destinations are solved, pack up to four scalar fields into each RGBA group:
 
 ```text
 group = floor(targetIndex / 4)
@@ -229,14 +229,14 @@ The next relaxation frame reads the newly exact field and writes into the other 
 
 ## 6. GPU navigation relaxation
 
-Create `ceil(interestPointCount / 4)` RGBA32F ping-pong target pairs. At 20 points there are five groups. At `250 x 150`, five pairs use approximately 6 MB.
+Create `ceil(destinationCount / 4)` RGBA32F ping-pong target pairs. At 20 destinations there are five groups. At `250 x 150`, five pairs use approximately 6 MB.
 
 Run exactly one full-screen relaxation pass for every group in every simulation frame:
 
 ```text
-1-4 points:   1 navigation draw per frame
-5-8 points:   2 navigation draws per frame
-17-20 points: 5 navigation draws per frame
+1-4 destinations:   1 navigation draw per frame
+5-8 destinations:   2 navigation draws per frame
+17-20 destinations: 5 navigation draws per frame
 ```
 
 Every channel has a different target. The shader receives four target positions/radii plus an active-channel mask for its group.
@@ -261,12 +261,12 @@ The debug renderer selects a group and channel, treats values near `UNREACHABLE`
 
 Support up to 10,000 agents with GPU state textures. Use square targets sized to `ceil(sqrt(agentCount))`:
 
-- Dynamic ping-pong RGBA32F state: `position.xy`, `direction`, `targetIndex`. Store direction in radians in `[0, 2 * PI)`, with zero pointing right and positive angles turning toward downward-positive world Y. Although `targetIndex` is logically an integer, store it as a float because indices up to 20 are represented exactly.
+- Dynamic ping-pong RGBA32F state: `position.xy`, `direction`, `destinationIndex`. Store direction in radians in `[0, 2 * PI)`, with zero pointing right and positive angles turning toward downward-positive world Y. Although `destinationIndex` is logically an integer, store it as a float because indices up to 20 are represented exactly.
 - Static RG32F metadata: `randomSeed`, `baseSpeed`. RGBA32F may be used as a compatibility fallback if RG32F texture support is problematic on a target device.
 
 Update the complete dynamic state in one agent pass and ping-pong between two single-attachment RGBA32F render targets. Convert heading to a direction with `vec2(cos(heading), sin(heading))` when steering or moving.
 
-Do not store destination coordinates per agent. Store point-of-interest position, radius, and selection weight once in a shared uniform table or small lookup texture, and resolve those values from `targetIndex`. With at most 20 points, a fixed uniform table with a switch-based lookup is sufficient and avoids duplicating identical point data across thousands of agents.
+Do not store destination coordinates per agent. Store destination position, radius, and selection weight once in a shared uniform table or small lookup texture, and resolve those values from `destinationIndex`. With at most 20 destinations, a fixed uniform table with a switch-based lookup is sufficient and avoids duplicating identical destination data across thousands of agents.
 
 Pixels beyond `agentCount` are inactive. Render agents with one points/instanced draw that fetches state by agent index.
 
@@ -330,7 +330,7 @@ The accepted old-to-new segment is also the segment rendered into the traffic te
 
 ### Arrival and retargeting
 
-An agent arrives when its native position enters the target interest point's radius. It then selects a different target according to interest-point weights, updates its target index, and continues without snapping its position to the target center.
+An agent arrives when its native position enters the destination's radius. It then selects a different destination according to destination weights, updates its destination index, and continues without snapping its position to the destination center.
 
 ## 8. User painting
 
@@ -357,7 +357,7 @@ After startup Dijkstra has completed, each rendered frame uses this order:
 5. Reduce native base plus current wear into the shared coarse effective-terrain target.
 6. Run one relaxation pass for every RGBA navigation group and swap each group.
 7. Start a debounced coarse readback/worker request when painting requires one and no newer request supersedes it.
-8. Resize and render terrain, wear, agents, interest points, and optional navigation debug output.
+8. Resize and render terrain, wear, agents, destinations, and optional navigation debug output.
 
 The one-frame delay between movement and its navigation-field effect is expected.
 
@@ -430,8 +430,8 @@ The exact file split may be consolidated where code remains small, but terrain, 
 
 - Gradual wear lowers costs through overwrite relaxation.
 - Fading raises costs rather than retaining stale minima.
-- Every field advances by one relaxation iteration per frame regardless of the total number of points.
-- Twenty interest points use five RGBA groups and five relaxation draws per frame.
+- Every field advances by one relaxation iteration per frame regardless of the total number of destinations.
+- Twenty destinations use five RGBA groups and five relaxation draws per frame.
 - Painting that changes connectivity is corrected by the next accepted Dijkstra result.
 - A stale worker response never replaces a newer paint revision.
 
@@ -442,10 +442,10 @@ The exact file split may be consolidated where code remains small, but terrain, 
 - Swept traversal prevents multi-pixel movement from jumping across a zero coarse cell.
 - Thin black native features remain traversable according to their averaged coarse value.
 - Fast movement produces continuous wear segments rather than dots.
-- Agents reach and retarget among all interest points without snapping.
+- Agents reach and retarget among all destinations without snapping.
 
 ### Project checks
 
 - Run `npm run typecheck` and `npm run build` after each implementation phase.
-- Visually verify the current road and roundabout at two and twenty interest points.
-- Profile the 20-point, 10,000-agent case before adding dirty rectangles, lower precision, or other optimizations.
+- Visually verify the current road and roundabout at two and twenty destinations.
+- Profile the 20-destination, 10,000-agent case before adding dirty rectangles, lower precision, or other optimizations.

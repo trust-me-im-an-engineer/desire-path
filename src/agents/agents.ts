@@ -6,7 +6,7 @@ import type { SimulationResolution } from "../simulation-size";
 import renderFragmentShader from './render/agents-render.frag?raw';
 import renderVertexShader from './render/agents-render.vert?raw';
 
-import { InterestPoints } from "../interest-points/interest-points";
+import { Destinations } from "../destinations/destinations";
 import computeFragmentShader from './compute/agents-compute.frag?raw';
 import computeVertexShader from './compute/agents-compute.vert?raw';
 
@@ -29,7 +29,7 @@ export class Agents {
 		simulationResolution: SimulationResolution,
 		terrainTexture: THREE.Texture,
 		coarseMap: THREE.Texture,
-		interestPoints: InterestPoints,
+		destinations: Destinations,
 		renderer: THREE.WebGLRenderer,
 		depth: number,
 		public count: number,
@@ -55,12 +55,12 @@ export class Agents {
 		propertiesTexture.needsUpdate = true;
 
 		// Initialize state texture with position.xy, direction and destination index
-		// Position = 0th interest point
+		// Position = 0th destination
 		// Direction and destination index = 0
 		const stateTextureData = new Float32Array(4 * TEXTURES_WIDTH ** 2);
 		for (let i = 0; i < stateTextureData.length; i += 4) {
-			stateTextureData[i] = interestPoints.points[0].nativePosition.x;
-			stateTextureData[i + 1] = interestPoints.points[0].nativePosition.y;
+			stateTextureData[i] = destinations.items[0].nativePosition.x;
+			stateTextureData[i + 1] = destinations.items[0].nativePosition.y;
 			stateTextureData[i + 2] = 0.0;
 			stateTextureData[i + 3] = 1.0;
 		}
@@ -113,8 +113,8 @@ export class Agents {
 				uPreviousStateTexture: { value: this.computeTargetRead.texture },
 				uPropertiesTexture: { value: propertiesTexture },
 
-				uInterestPointsTexture: { value: interestPoints.texture },
-				uInterestPointsTotalWeight: { value: interestPoints.totalWeight },
+				uDestinationsTexture: { value: destinations.texture },
+				uDestinationsTotalWeight: { value: destinations.totalWeight },
 
 				uSimulationResolution: { value: simulationResolution },
 				uTerrainTexture: { value: terrainTexture },
