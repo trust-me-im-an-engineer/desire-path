@@ -5,8 +5,8 @@ export class SimulationResolution {
 	readonly downscaled: THREE.Vector2;
 
 	constructor(
-		readonly width: number,
-		readonly height: number,
+		width: number,
+		height: number,
 		readonly downscaleFactor: number,
 	) {
 		this.native = new THREE.Vector2(width, height);

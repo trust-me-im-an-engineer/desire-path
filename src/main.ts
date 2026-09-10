@@ -1,9 +1,10 @@
 import * as THREE from "three";
 
+import { Agents } from "./agents/agents";
 import { CoarseMap } from "./coarse-map/coarse-map";
 import { Destination } from "./destinations/destination";
 import { Destinations } from "./destinations/destinations";
-import { dijkstra } from "./navigation-map/navigation-map";
+import { NavigationMaps } from "./navigation-map/navigation-maps";
 import { SimulationResolution } from "./simulation-size";
 import { resize } from "./viewport";
 
@@ -41,6 +42,7 @@ scene.add(terrainMesh);
 const destinations = new Destinations([
 	new Destination(new THREE.Vector2(200, 270), 12, simulationResolution),
 	new Destination(new THREE.Vector2(800, 264), 12, simulationResolution),
+	// new Destination(new THREE.Vector2(501, 400), 12, simulationResolution),
 ]);
 scene.add(destinations.group);
 
@@ -48,50 +50,14 @@ const coarseMap = new CoarseMap(simulationResolution, terrainTexture);
 scene.add(coarseMap.mesh);
 
 coarseMap.compute(renderer);
-const coarseMapArray = coarseMap.toArray(renderer);
 
-const navigationMapArray = dijkstra(destinations.items[0].downscaledPosition, coarseMapArray, simulationResolution);
-
-const navigationMapTexture = new THREE.DataTexture(
-	navigationMapArray,
-	simulationResolution.downscaled.width,
-	simulationResolution.downscaled.height,
-	THREE.RedFormat,
-	THREE.FloatType,
+const navigationMaps = new NavigationMaps(
+	simulationResolution,
+	coarseMap,
+	destinations.items,
+	renderer,
 );
-navigationMapTexture.needsUpdate = true;
-
-import { Agents } from "./agents/agents";
-import renderFragmentShader from './navigation-map/render/navigation-render.frag?raw';
-import renderVertexShader from './navigation-map/render/navigation-render.vert?raw';
-
-// Render computed navigation field texture using its channel as transparency
-const renderMaterial = new THREE.RawShaderMaterial({
-	glslVersion: THREE.GLSL3,
-
-	uniforms: {
-		uNavigation: {
-			value: navigationMapTexture,
-		},
-	},
-
-	vertexShader: renderVertexShader,
-	fragmentShader: renderFragmentShader,
-
-	transparent: true,
-	depthWrite: false,
-});
-
-const navigationMapMesh = new THREE.Mesh(
-	new THREE.PlaneGeometry(simulationResolution.native.width, simulationResolution.native.height),
-	renderMaterial,
-);
-navigationMapMesh.position.set(
-	simulationResolution.native.width / 2,
-	-simulationResolution.native.height / 2,
-	3,
-);
-scene.add(navigationMapMesh);
+scene.add(navigationMaps.mesh);
 
 const agents = new Agents(
 	simulationResolution,
@@ -100,7 +66,7 @@ const agents = new Agents(
 	destinations,
 	renderer,
 	5,
-	3,
+	100,
 );
 scene.add(agents.mesh);
 
@@ -119,7 +85,7 @@ function bindVisibilityToggle(id: string, object: THREE.Object3D): void {
 bindVisibilityToggle("showTerrain", terrainMesh);
 bindVisibilityToggle("showDestinations", destinations.group);
 bindVisibilityToggle("showCoarseMap", coarseMap.mesh);
-bindVisibilityToggle("showNavigationMap", navigationMapMesh);
+bindVisibilityToggle("showNavigationMap", navigationMaps.mesh);
 bindVisibilityToggle("showAgents", agents.mesh);
 
 function frameRequestCallback() {
