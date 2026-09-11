@@ -51,10 +51,24 @@
           Карта проходимости
         </label>
 
-        <label>
-          <input id="showNavigationMap" type="checkbox" checked>
-          Карта навигации
-        </label>
+        <fieldset>
+          <legend>Карты навигации</legend>
+
+          <label>
+            <input id="hideNavigationMap" name="navigationMap" value="none" type="radio" checked>
+            скрыть
+          </label>
+
+          <label>
+            <input name="navigationMap" value=0 type="radio">
+            1
+          </label>
+
+          <label>
+            <input name="navigationMap" value=1 type="radio">
+            2
+          </label>
+        </fieldset>
 
         <label>
           <input id="showAgents" type="checkbox" checked>
