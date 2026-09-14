@@ -133,12 +133,11 @@ float navigationWeight(ivec2 cell, int layer) {
 
 // steer sets agent's direction.
 void steer(inout State state) {
-	ivec2 agentCell = ivec2(state.position / uDownscaleFactor);
-
+	ivec2 downscaledPosition = ivec2(state.position / uDownscaleFactor);
 	ivec2 navigationMapSize = textureSize(uNavigationMapTextureArray, 0).xy;
 
 	// Agent Y is down-positive, while texture Y is up-positive.
-	ivec2 navigationCell = ivec2(agentCell.x, navigationMapSize.y - 1 - agentCell.y);
+	ivec2 navigationCell = ivec2(downscaledPosition.x, navigationMapSize.y - 1 - downscaledPosition.y);
 
 	ivec2 bestDirectionVec = ivec2(0);
 	float smallestWeight = UNREACHABLE;
