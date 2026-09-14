@@ -159,6 +159,7 @@ void steer(inout State state) {
 	state.direction = atan(float(bestDirectionVec.y), float(bestDirectionVec.x));
 }
 
+// move sets agent's new posision based on its position and direction.
 void move(inout State state, float speed) {
 	vec2 movementVec = vec2(cos(state.direction), sin(state.direction));
 	state.position += movementVec * speed;
