@@ -16,6 +16,9 @@ out vec4 outState;
 
 const float UNREACHABLE = 1e30f;
 
+// random is [0.0, 1.0) value generated at each pass.
+float random;
+
 // State represents dynamic agent state.
 struct State {
 	vec2 position;
@@ -73,11 +76,11 @@ uint pcgHash(uint inputValue) {
 }
 
 // random returns a deterministic pseudo-random value in the range [0.0, 1.0).
-float random(ivec2 agentCoord, Properties properties, State state) {
+float generateRandom(State state, Properties properties) {
 	uint value = floatBitsToUint(properties.seed);
 
-	value ^= pcgHash(uint(agentCoord.x));
-	value ^= pcgHash(uint(agentCoord.y));
+	value ^= pcgHash(uint(gl_FragCoord.x));
+	value ^= pcgHash(uint(gl_FragCoord.y));
 	value ^= pcgHash(floatBitsToUint(state.position.x));
 	value ^= pcgHash(floatBitsToUint(state.position.y));
 	value ^= pcgHash(floatBitsToUint(state.direction));
@@ -88,13 +91,13 @@ float random(ivec2 agentCoord, Properties properties, State state) {
 		(1.0f / 16777216.0f);
 }
 
-// isDestinationReached checks if agent is closer to it's destination, than destination's weight.
+// isDestinationReached checks if agent is closer to its destination, than destination's weight.
 bool isDestinationReached(State state, Destination destination) {
 	return distance(state.position, destination.position) < destination.weight;
 }
 
 // chooseNextDestination chooses a new destination randomly according to weights.
-Destination chooseNextDestination(Destination currentDestination, float rand) {
+Destination chooseNextDestination(Destination currentDestination) {
 	int i = 0;
 	Destination destination;
 	float collectedWeight = 0.0f;
@@ -102,7 +105,7 @@ Destination chooseNextDestination(Destination currentDestination, float rand) {
 	int capacity = textureSize(uDestinationsTexture, 0).x;
 
 	for (int i = 0; i < capacity; i++) {
-		if (collectedWeight >= rand * (uDestinationsTotalWeight - currentDestination.weight)) {
+		if (collectedWeight >= random * (uDestinationsTotalWeight - currentDestination.weight)) {
 			break;
 		}
 
@@ -162,16 +165,15 @@ void move(inout State state, float speed) {
 }
 
 void main() {
-	ivec2 coord = ivec2(gl_FragCoord.xy);
-
-	State state = readState(coord);
-	Properties properties = readProperties(coord);
+	ivec2 textureCoord = ivec2(gl_FragCoord.xy);
+	State state = readState(textureCoord);
+	Properties properties = readProperties(textureCoord);
 	Destination destination = readDestination(state.destinationIndex);
 
-	float rand = random(ivec2(gl_FragCoord.xy), properties, state);
+	random = generateRandom(state, properties);
 
 	if (isDestinationReached(state, destination)) {
-		destination = chooseNextDestination(destination, rand);
+		destination = chooseNextDestination(destination);
 		state.destinationIndex = destination.index;
 	}
 
