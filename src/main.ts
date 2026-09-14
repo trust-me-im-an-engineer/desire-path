@@ -2,12 +2,12 @@ import * as THREE from "three";
 import * as controls from "./controls";
 import * as viewport from "./viewport";
 
-import { Agents } from "./agents/agents";
-import { CoarseMap } from "./coarse-map/coarse-map";
-import { Destination } from "./destinations/destination";
-import { Destinations } from "./destinations/destinations";
-import { NavigationMaps } from "./navigation-map/navigation-maps";
-import { SimulationResolution } from "./simulation-size";
+import { Agents } from "./simulation/agents/agents";
+import { CoarseMap } from "./simulation/coarse-map/coarse-map";
+import { Destination } from "./simulation/destinations/destination";
+import { Destinations } from "./simulation/destinations/destinations";
+import { NavigationMaps } from "./simulation/navigation-map/navigation-maps";
+import { SimulationResolution } from "./simulation/simulation-size";
 
 const SIMULATION_DOWNSCALE_FACTOR = 8;
 

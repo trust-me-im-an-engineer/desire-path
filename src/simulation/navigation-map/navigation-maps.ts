@@ -1,8 +1,8 @@
 import { Heap } from "heap-js";
 import * as THREE from "three";
 
-import { Destination } from "../destinations/destination";
 import type { SimulationResolution } from "../simulation-size";
+import { Destination } from "../destinations/destination";
 
 import { FullScreenQuad } from "three/examples/jsm/Addons.js";
 import { CoarseMap } from "../coarse-map/coarse-map";

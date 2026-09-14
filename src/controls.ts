@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { NavigationMaps } from "./navigation-map/navigation-maps";
+import { NavigationMaps } from "./simulation/navigation-map/navigation-maps";
 
 export function bindVisibilityToggle(id: string, object: THREE.Object3D): void {
 	const toggle = document.getElementById(id);
