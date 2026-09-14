@@ -35,7 +35,16 @@ aside {
   padding: 10px;
 }
 
-.debug-section {
+.control>label {
+  display: block;
+  margin-bottom: 12px;
+}
+
+.control>label input {
+  display: block;
+}
+
+.debug {
   display: grid;
   gap: 8px;
   margin-top: 16px;

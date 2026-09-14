@@ -15,25 +15,27 @@
 <body>
   <main>
     <aside>
-      <label class="control">
-        Разрешение
-        <input id="routeResolution" type="range" min="1" max="20" value="8">
-        <output id="routeResolutionValue"></output>
-      </label>
+      <fieldset class="control">
+        <label>
+          Агенты
+          <input id="agentCount" type="range" min="0" max="10000" value="1000">
+          <output id="agentCountValue"></output>
+        </label>
 
-      <label class="control">
-        Агенты
-        <input id="agentCount" type="range" min="0" max="10000" value="1000">
-        <output id="agentCountValue"></output>
-      </label>
+        <label>
+          Скорость агентов
+          <input id="agentSpeed" type="range" min="0.2" max="5.0" value="1.0" step="0.1">
+          <output id="agentSpeedValue"></output>
+        </label>
 
-      <label class="control">
-        Инерция направления
-        <input id="turnSmoothness" type="range" min="0" max="555" value="0.6" step="0.1">
-        <output id="turnSmoothnessValue"></output>
-      </label>
+        <label>
+          Инерция направления
+          <input id="turnSmoothness" type="range" min="0" max="555" value="0.6" step="0.1">
+          <output id="turnSmoothnessValue"></output>
+        </label>
+      </fieldset>
 
-      <fieldset class="debug-section">
+      <fieldset class="debug">
         <legend>Отладка</legend>
 
         <label>
