@@ -11,9 +11,9 @@ import { SimulationResolution } from "./simulation/simulation-size";
 
 const SIMULATION_DOWNSCALE_FACTOR = 8;
 
-const canvas = <HTMLCanvasElement>document.getElementById("simulationCanvas");
-
 const scene = new THREE.Scene();
+
+const canvas = <HTMLCanvasElement>document.getElementById("simulationCanvas");
 const renderer = new THREE.WebGLRenderer({ canvas, alpha: true });
 
 // World origin point in top left corner of screen
