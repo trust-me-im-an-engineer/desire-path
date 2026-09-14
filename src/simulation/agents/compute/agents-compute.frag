@@ -1,3 +1,5 @@
+#define PI 3.14159265359
+
 precision highp float;
 precision highp int;
 
@@ -121,7 +123,7 @@ Destination chooseNextDestination(Destination currentDestination) {
 
 // navigationWeight returns weight of given cell in navigation map.
 // Cells out of bounds returned as UNREACHABLE.
-float navigationWeight(ivec2 cell, int layer) {
+float getNavigationWeight(ivec2 cell, int layer) {
 	ivec2 size = textureSize(uNavigationMapTextureArray, 0).xy;
 	if (any(lessThan(cell, ivec2(0))) ||
 		any(greaterThanEqual(cell, size))) {
@@ -129,6 +131,11 @@ float navigationWeight(ivec2 cell, int layer) {
 	}
 
 	return texelFetch(uNavigationMapTextureArray, ivec3(cell, layer), 0).r;
+}
+
+float angleDiff(float a, float b) {
+	float d = abs(a - b);
+	return min(d, 2.0f * PI - d);
 }
 
 // steer sets agent's direction.
@@ -147,7 +154,13 @@ void steer(inout State state) {
 				continue;
 			}
 
-			float weight = navigationWeight(navigationPosition + ivec2(x, -y), state.destinationIndex);
+			float navigationWeight = getNavigationWeight(navigationPosition + ivec2(x, -y), state.destinationIndex);
+
+			float direction = atan(float(y), float(x));
+			float steeringWeight = angleDiff(state.direction, direction) * 2000.0f;
+
+			float weight = navigationWeight + steeringWeight;
+
 			if (weight < smallestWeight) {
 				bestDirectionVec = ivec2(x, y);
 				smallestWeight = weight;
