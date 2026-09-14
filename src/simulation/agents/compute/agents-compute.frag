@@ -137,7 +137,7 @@ void steer(inout State state) {
 	ivec2 navigationMapSize = textureSize(uNavigationMapTextureArray, 0).xy;
 
 	// Agent Y is down-positive, while texture Y is up-positive.
-	ivec2 navigationCell = ivec2(downscaledPosition.x, navigationMapSize.y - 1 - downscaledPosition.y);
+	ivec2 navigationPosition = ivec2(downscaledPosition.x, navigationMapSize.y - 1 - downscaledPosition.y);
 
 	ivec2 bestDirectionVec = ivec2(0);
 	float smallestWeight = UNREACHABLE;
@@ -147,7 +147,7 @@ void steer(inout State state) {
 				continue;
 			}
 
-			float weight = navigationWeight(navigationCell + ivec2(x, -y), state.destinationIndex);
+			float weight = navigationWeight(navigationPosition + ivec2(x, -y), state.destinationIndex);
 			if (weight < smallestWeight) {
 				bestDirectionVec = ivec2(x, y);
 				smallestWeight = weight;
