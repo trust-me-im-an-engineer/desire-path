@@ -11,6 +11,8 @@ import computeVertexShader from './compute/navigation-compute.vert?raw';
 import renderFragmentShader from './render/navigation-render.frag?raw';
 import renderVertexShader from './render/navigation-render.vert?raw';
 
+export const UNREACHABLE = 1e30;
+
 export class NavigationMaps {
 	public readonly textureArray: THREE.DataArrayTexture;
 	public readonly mesh: THREE.Mesh;
@@ -24,6 +26,7 @@ export class NavigationMaps {
 	private readonly renderMaterial: THREE.RawShaderMaterial;
 
 	private destinationCount: number;
+	private maxReachableWeight: number[] = [];
 
 	constructor(
 		simulationResolution: SimulationResolution,
@@ -35,14 +38,23 @@ export class NavigationMaps {
 
 		const coarseMapArray = coarseMap.toArray(renderer);
 		const data = new Float32Array(mapSize * destinations.length);
-		for (const [index, destination] of destinations.entries()) {
+		for (const [i, destination] of destinations.entries()) {
 			const navigationMap = dijkstra(
 				destination.downscaledPosition,
 				coarseMapArray,
 				simulationResolution,
 			);
 
-			data.set(navigationMap, index * mapSize);
+			const reachableWeights = Array.from(navigationMap).filter(
+				weight => Number.isFinite(weight) && weight < UNREACHABLE
+			);
+			reachableWeights.sort((a, b) => a - b);
+
+			const weightIndex = Math.floor(0.9 * (reachableWeights.length - 1));
+			const displayScale = Math.max(0.0001, reachableWeights[weightIndex] ?? 0);
+			this.maxReachableWeight.push(displayScale);
+
+			data.set(navigationMap, i * mapSize);
 		}
 		this.textureArray = new THREE.DataArrayTexture(
 			data,
@@ -78,6 +90,8 @@ export class NavigationMaps {
 		);
 		this.navigationWrite = this.navigationRead.clone();
 
+		console.log(this.maxReachableWeight[0])
+
 		// Render navigation map using its channel as transparency
 		this.renderMaterial = new THREE.RawShaderMaterial({
 			glslVersion: THREE.GLSL3,
@@ -85,6 +99,7 @@ export class NavigationMaps {
 			uniforms: {
 				uNavigationMaps: { value: this.textureArray },
 				uDestinationIndex: { value: 0 },
+				uMaxReachableWeight: { value: this.maxReachableWeight[0] }
 			},
 
 			vertexShader: renderVertexShader,
@@ -131,11 +146,9 @@ export class NavigationMaps {
 
 	setDisplayedDestination(index: number): void {
 		this.renderMaterial.uniforms.uDestinationIndex.value = index;
+		this.renderMaterial.uniforms.uMaxReachableWeight.value = this.maxReachableWeight[index]
 	}
 }
-
-/** A finite value is used so navigation fields can safely be stored in textures. */
-export const UNREACHABLE = 1e20;
 
 type HeapEntry = {
 	index: number;
@@ -207,7 +220,7 @@ function dijkstra(destination: THREE.Vector2, map: Float32Array, simulationResol
 					distance *= Math.SQRT2;
 				}
 
-				const edgeCost = distance * ((1 / currentWeight + 1 / nextWeight) << 7);
+				const edgeCost = distance * ((1 / currentWeight + 1 / nextWeight));
 
 				const candidate = Math.min(UNREACHABLE, current.cost + edgeCost);
 
