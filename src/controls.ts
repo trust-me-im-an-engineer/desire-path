@@ -2,6 +2,24 @@ import * as THREE from "three";
 
 import { NavigationMaps } from "./simulation/navigation-map/navigation-maps";
 
+export function getAgentSpeed(): number {
+	var agentSpeed = 1.0;
+	const agentSpeedElement = document.getElementById("agentSpeed") as HTMLInputElement;
+	if (agentSpeedElement !== null) {
+		agentSpeed = parseFloat(agentSpeedElement.value);
+	}
+	return agentSpeed;
+}
+
+export function getAgentCount(): number {
+	var agentCount = 1000;
+	const agentSpeedElement = document.getElementById("agentCount") as HTMLInputElement;
+	if (agentSpeedElement !== null) {
+		agentCount = parseInt(agentSpeedElement.value);
+	}
+	return agentCount;
+}
+
 export function bindVisibilityToggle(id: string, object: THREE.Object3D): void {
 	const toggle = document.getElementById(id);
 	if (!(toggle instanceof HTMLInputElement)) {
@@ -12,15 +30,6 @@ export function bindVisibilityToggle(id: string, object: THREE.Object3D): void {
 	toggle.addEventListener("change", () => {
 		object.visible = toggle.checked;
 	});
-}
-
-export function getAgentSpeed(): number {
-	var agentSpeed = 1.0;
-	const agentSpeedElement = document.getElementById("agentSpeed") as HTMLInputElement;
-	if (agentSpeedElement !== null) {
-		agentSpeed = parseFloat(agentSpeedElement.value);
-	}
-	return agentSpeed
 }
 
 export function setupNavigationMapsDebug(navigationMaps: NavigationMaps) {
