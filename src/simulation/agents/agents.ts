@@ -53,15 +53,34 @@ export class Agents {
 		propertiesTexture.colorSpace = THREE.NoColorSpace;
 		propertiesTexture.needsUpdate = true;
 
-		// Initialize state texture with position.xy, direction and destination index
-		// Position = 0th destination
-		// Direction and destination index = 0
+		// Choose each starting destination in proportion to its weight.
+		const weightedDestinationIndices: number[] = [];
+		const cumulativeDestinationWeights: number[] = [];
+		let totalDestinationWeight = 0;
+		for (let i = 0; i < destinations.items.length; i++) {
+			const destination = destinations.items[i];
+			totalDestinationWeight += destination.weight;
+			weightedDestinationIndices.push(i);
+			cumulativeDestinationWeights.push(totalDestinationWeight);
+		}
+
+		// Initialize state texture with position.xy, direction and destination index.
 		const stateTextureData = new Float32Array(4 * TEXTURES_WIDTH ** 2);
 		for (let i = 0; i < stateTextureData.length; i += 4) {
-			stateTextureData[i] = destinations.items[0].nativePosition.x;
-			stateTextureData[i + 1] = destinations.items[0].nativePosition.y;
+			const selectedWeight = Math.random() * totalDestinationWeight;
+			let weightedIndex = 0;
+			while (
+				weightedIndex < cumulativeDestinationWeights.length - 1 &&
+				selectedWeight >= cumulativeDestinationWeights[weightedIndex]
+			) {
+				weightedIndex++;
+			}
+			const destinationIndex = weightedDestinationIndices[weightedIndex];
+
+			stateTextureData[i] = destinations.items[destinationIndex].nativePosition.x;
+			stateTextureData[i + 1] = destinations.items[destinationIndex].nativePosition.y;
 			stateTextureData[i + 2] = 0.0;
-			stateTextureData[i + 3] = 1.0;
+			stateTextureData[i + 3] = destinationIndex;
 		}
 		const stateTexture = new THREE.DataTexture(
 			stateTextureData,
