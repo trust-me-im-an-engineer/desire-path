@@ -8,9 +8,13 @@ uniform sampler2D uDestinationsTexture;
 uniform float uDestinationsTotalWeight;
 
 uniform ivec2 uSimulationResolution;
+uniform float uDownscaleFactor;
 uniform sampler2D uTerrainTexture;
+uniform highp sampler2DArray uNavigationMapTextureArray;
 
 out vec4 outState;
+
+const float UNREACHABLE = 1e30f;
 
 // State represents dynamic agent state
 struct State {
@@ -106,6 +110,18 @@ Destination chooseNextDestination(Destination currentDestination, float rand) {
 	return destination;
 }
 
+// navigationWeight returns weight of given cell in navigation map.
+// cells out of bounds returned as UNREACHABLE.
+float navigationWeight(ivec2 cell, int layer) {
+	ivec2 size = textureSize(uNavigationMapTextureArray, 0).xy;
+	if (any(lessThan(cell, ivec2(0))) ||
+		any(greaterThanEqual(cell, size))) {
+		return UNREACHABLE;
+	}
+
+	return texelFetch(uNavigationMapTextureArray, ivec3(cell, layer), 0).r;
+}
+
 void main() {
 	ivec2 coord = ivec2(gl_FragCoord.xy);
 
@@ -120,8 +136,32 @@ void main() {
 		state.destinationIndex = destination.index;
 	}
 
-	vec2 directionVec = destination.position - state.position;
-	state.direction = atan(directionVec.y, directionVec.x);
+	ivec2 navigationMapSize = textureSize(uNavigationMapTextureArray, 0).xy;
+	ivec2 agentCell = ivec2(state.position / uDownscaleFactor);
+
+	// Agent Y is down-positive, while texture Y is up-positive.
+	ivec2 navigationCell = ivec2(agentCell.x, navigationMapSize.y - 1 - agentCell.y);
+
+	ivec2 bestDirectionVec = ivec2(0);
+	float smallestWeight = UNREACHABLE;
+	for (int x = -1; x <= 1; x++) {
+		for (int y = -1; y <= 1; y++) {
+			if (x == 0 && y == 0) {
+				continue;
+			}
+
+			float weight = navigationWeight(navigationCell + ivec2(x, -y), state.destinationIndex);
+			if (weight < smallestWeight) {
+				bestDirectionVec = ivec2(x, y);
+				smallestWeight = weight;
+			}
+		}
+	}
+
+	state.direction = atan(float(bestDirectionVec.y), float(bestDirectionVec.x));
+
+	// vec2 directionVec = destination.position - state.position;
+	// state.direction = atan(directionVec.y, directionVec.x);
 
 	state.position += vec2(cos(state.direction), sin(state.direction)) * properties.speed;
 

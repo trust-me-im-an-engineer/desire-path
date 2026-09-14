@@ -42,7 +42,7 @@ scene.add(terrainMesh);
 const destinations = new Destinations([
 	new Destination(new THREE.Vector2(200, 270), 12, simulationResolution),
 	new Destination(new THREE.Vector2(800, 264), 12, simulationResolution),
-	// new Destination(new THREE.Vector2(501, 400), 12, simulationResolution),
+	new Destination(new THREE.Vector2(501, 400), 12, simulationResolution),
 ]);
 scene.add(destinations.group);
 
@@ -65,6 +65,7 @@ const agents = new Agents(
 	terrainTexture,
 	coarseMap.computeTarget.texture,
 	destinations,
+	navigationMaps.textureArray,
 	renderer,
 	5,
 	100,

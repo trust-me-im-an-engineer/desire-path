@@ -11,8 +11,8 @@ import computeFragmentShader from './compute/agents-compute.frag?raw';
 import computeVertexShader from './compute/agents-compute.vert?raw';
 
 const TEXTURES_WIDTH = 1000;
-const MIN_AGENT_SPEED = 2.5;
-const MAX_AGENT_SPEED = 5.0;
+const MIN_AGENT_SPEED = 0.5;
+const MAX_AGENT_SPEED = 1.0;
 const AGENT_LENGTH = 15;
 const AGENT_WIDTH = 10;
 
@@ -30,6 +30,7 @@ export class Agents {
 		terrainTexture: THREE.Texture,
 		coarseMap: THREE.Texture,
 		destinations: Destinations,
+		navigationMapTextureArray: THREE.DataArrayTexture,
 		renderer: THREE.WebGLRenderer,
 		depth: number,
 		public count: number,
@@ -116,8 +117,10 @@ export class Agents {
 				uDestinationsTexture: { value: destinations.texture },
 				uDestinationsTotalWeight: { value: destinations.totalWeight },
 
-				uSimulationResolution: { value: simulationResolution },
+				uSimulationResolution: { value: simulationResolution.native },
+				uDownscaleFactor: { value: simulationResolution.downscaleFactor },
 				uTerrainTexture: { value: terrainTexture },
+				uNavigationMapTextureArray: { value: navigationMapTextureArray },
 			},
 
 			vertexShader: computeVertexShader,
