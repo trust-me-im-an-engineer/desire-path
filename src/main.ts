@@ -1,4 +1,6 @@
 import * as THREE from "three";
+import * as controls from "./controls";
+import * as viewport from "./viewport";
 
 import { Agents } from "./agents/agents";
 import { CoarseMap } from "./coarse-map/coarse-map";
@@ -6,7 +8,6 @@ import { Destination } from "./destinations/destination";
 import { Destinations } from "./destinations/destinations";
 import { NavigationMaps } from "./navigation-map/navigation-maps";
 import { SimulationResolution } from "./simulation-size";
-import { resize } from "./viewport";
 
 const SIMULATION_DOWNSCALE_FACTOR = 8;
 
@@ -60,12 +61,6 @@ const navigationMaps = new NavigationMaps(
 scene.add(navigationMaps.mesh);
 navigationMaps.mesh.visible = false;
 
-var agentSpeed = 1.0;
-const agentSpeedElement = document.getElementById("agentSpeed") as HTMLInputElement;
-if (agentSpeedElement !== null) {
-	agentSpeed = parseFloat(agentSpeedElement.value);
-}
-
 const agents = new Agents(
 	simulationResolution,
 	terrainTexture,
@@ -74,56 +69,21 @@ const agents = new Agents(
 	navigationMaps.textureArray,
 	renderer,
 	5,
-	agentSpeed,
+	controls.getAgentSpeed(),
 	100,
 );
 scene.add(agents.mesh);
 
-function bindVisibilityToggle(id: string, object: THREE.Object3D): void {
-	const toggle = document.getElementById(id);
-	if (!(toggle instanceof HTMLInputElement)) {
-		throw new Error(`Visibility toggle #${id} not found`);
-	}
+controls.bindVisibilityToggle("showTerrain", terrainMesh);
+controls.bindVisibilityToggle("showDestinations", destinations.group);
+controls.bindVisibilityToggle("showCoarseMap", coarseMap.mesh);
+controls.bindVisibilityToggle("showAgents", agents.mesh);
 
-	object.visible = toggle.checked;
-	toggle.addEventListener("change", () => {
-		object.visible = toggle.checked;
-	});
-}
-
-bindVisibilityToggle("showTerrain", terrainMesh);
-bindVisibilityToggle("showDestinations", destinations.group);
-bindVisibilityToggle("showCoarseMap", coarseMap.mesh);
-bindVisibilityToggle("showAgents", agents.mesh);
-
-const hideNavigationMapButton = document.getElementById("hideNavigationMap");
-if (hideNavigationMapButton instanceof HTMLInputElement) {
-	navigationMaps.mesh.visible = !hideNavigationMapButton.checked;
-}
-
-const selectedNavigationMapButton = document.querySelector('input[name="navigationMap"]:checked');
-if (selectedNavigationMapButton instanceof HTMLInputElement && selectedNavigationMapButton.value !== "none") {
-	navigationMaps.setDisplayedDestination(parseInt(selectedNavigationMapButton.value));
-}
-
-const navigationMapButtons = document.querySelectorAll('input[name="navigationMap"]');
-navigationMapButtons.forEach(button => {
-	button.addEventListener("change", (event) => {
-		const target = event.target as HTMLInputElement;
-		if (target.checked) {
-			if (target.value === "none") {
-				navigationMaps.mesh.visible = false;
-			} else {
-				navigationMaps.mesh.visible = true;
-				navigationMaps.setDisplayedDestination(parseInt(target.value));
-			}
-		}
-	});
-});
+controls.setupNavigationMapsDebug(navigationMaps);
 
 function frameRequestCallback() {
 	// Resize camera and renderer according to current canvas size
-	resize(renderer, camera, simulationResolution);
+	viewport.resize(renderer, camera, simulationResolution);
 
 	agents.compute(renderer);
 
