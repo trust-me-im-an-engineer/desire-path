@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { FullScreenQuad } from "three/addons/postprocessing/Pass.js";
 
-import type { SimulationResolution } from "./simulation-size";
+import { SimulationResolution } from "./simulation-size";
 
 type RenderMaterialFactory = (texture: THREE.Texture) => THREE.Material;
 

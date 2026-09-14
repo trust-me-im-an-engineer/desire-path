@@ -2,6 +2,7 @@ import * as THREE from "three";
 
 import { SimulationMap } from "../simulation-map";
 import type { SimulationResolution } from "../simulation-size";
+
 import fragmentShader from './coarse-map.frag?raw';
 import vertexShader from './coarse-map.vert?raw';
 

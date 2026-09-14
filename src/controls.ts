@@ -1,4 +1,5 @@
 import * as THREE from "three";
+
 import { NavigationMaps } from "./simulation/navigation-map/navigation-maps";
 
 export function bindVisibilityToggle(id: string, object: THREE.Object3D): void {

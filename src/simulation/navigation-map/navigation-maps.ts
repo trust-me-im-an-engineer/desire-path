@@ -1,11 +1,11 @@
 import { Heap } from "heap-js";
 import * as THREE from "three";
-
-import type { SimulationResolution } from "../simulation-size";
-import { Destination } from "../destinations/destination";
-
 import { FullScreenQuad } from "three/examples/jsm/Addons.js";
+
 import { CoarseMap } from "../coarse-map/coarse-map";
+import { Destination } from "../destinations/destination";
+import type { SimulationResolution } from "../simulation-size";
+
 import computeFragmentShader from './compute/navigation-compute.frag?raw';
 import computeVertexShader from './compute/navigation-compute.vert?raw';
 import renderFragmentShader from './render/navigation-render.frag?raw';

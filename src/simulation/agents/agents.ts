@@ -1,14 +1,13 @@
 import * as THREE from "three";
-
 import { FullScreenQuad } from "three/addons/postprocessing/Pass.js";
-import type { SimulationResolution } from "../simulation-size";
-
-import renderFragmentShader from './render/agents-render.frag?raw';
-import renderVertexShader from './render/agents-render.vert?raw';
 
 import { Destinations } from "../destinations/destinations";
+import type { SimulationResolution } from "../simulation-size";
+
 import computeFragmentShader from './compute/agents-compute.frag?raw';
 import computeVertexShader from './compute/agents-compute.vert?raw';
+import renderFragmentShader from './render/agents-render.frag?raw';
+import renderVertexShader from './render/agents-render.vert?raw';
 
 const TEXTURES_WIDTH = 1000;
 const AGENT_LENGTH = 15;
