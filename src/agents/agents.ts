@@ -11,8 +11,6 @@ import computeFragmentShader from './compute/agents-compute.frag?raw';
 import computeVertexShader from './compute/agents-compute.vert?raw';
 
 const TEXTURES_WIDTH = 1000;
-const MIN_AGENT_SPEED = 0.5;
-const MAX_AGENT_SPEED = 1.0;
 const AGENT_LENGTH = 15;
 const AGENT_WIDTH = 10;
 
@@ -33,6 +31,7 @@ export class Agents {
 		navigationMapTextureArray: THREE.DataArrayTexture,
 		renderer: THREE.WebGLRenderer,
 		depth: number,
+		speed: number,
 		public count: number,
 
 	) {
@@ -40,7 +39,7 @@ export class Agents {
 		const propertiesTextureData = new Float32Array(2 * TEXTURES_WIDTH ** 2);
 		for (let i = 0; i < propertiesTextureData.length; i += 2) {
 			propertiesTextureData[i] = Math.random();
-			propertiesTextureData[i + 1] = MIN_AGENT_SPEED + Math.random() * (MAX_AGENT_SPEED - MIN_AGENT_SPEED);
+			propertiesTextureData[i + 1] = speed * (0.5 + Math.random());
 		}
 		const propertiesTexture = new THREE.DataTexture(
 			propertiesTextureData,

@@ -60,6 +60,12 @@ const navigationMaps = new NavigationMaps(
 scene.add(navigationMaps.mesh);
 navigationMaps.mesh.visible = false;
 
+var agentSpeed = 1.0;
+const agentSpeedElement = document.getElementById("agentSpeed") as HTMLInputElement;
+if (agentSpeedElement !== null) {
+	agentSpeed = parseFloat(agentSpeedElement.value);
+}
+
 const agents = new Agents(
 	simulationResolution,
 	terrainTexture,
@@ -68,6 +74,7 @@ const agents = new Agents(
 	navigationMaps.textureArray,
 	renderer,
 	5,
+	agentSpeed,
 	100,
 );
 scene.add(agents.mesh);
