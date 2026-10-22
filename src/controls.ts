@@ -70,4 +70,10 @@ export function setupInputPair(idPrefix: string) {
 	number.addEventListener('input', () => {
 		range.value = number.value;
 	});
+
+	number.addEventListener('keydown', (event) => {
+		if (event.key === 'Enter') {
+			number.blur();
+		}
+	});
 }

@@ -39,6 +39,12 @@ aside {
   margin-top: 16px;
 }
 
-label {
-  margin-top: 12px;
+.field {
+  margin-bottom: 10px;
+}
+
+.debug > label {
+  display: block;
+  margin-top: 8px;
+  margin-bottom: 8px;
 }
