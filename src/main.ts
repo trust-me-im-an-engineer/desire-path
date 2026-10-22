@@ -24,7 +24,7 @@ camera.top = 0;
 camera.position.z = 100;
 camera.updateProjectionMatrix();
 
-const terrainTexture = await new THREE.TextureLoader().loadAsync("assets/2.png");
+const terrainTexture = await new THREE.TextureLoader().loadAsync("assets/5.png");
 terrainTexture.generateMipmaps = false;
 terrainTexture.colorSpace = THREE.SRGBColorSpace;
 
@@ -89,13 +89,36 @@ controls.bindInputPair('agentInertia');
 const playback = new SimulationPlayback();
 controls.bindSimulationPlayback(playback);
 
-function frameRequestCallback() {
+let readingState = false;
+
+async function updateAgentDebug() {
+	if (readingState) return;
+
+	readingState = true;
+	try {
+		const state = await agents.read0thAgentState(renderer);
+		const element = document.getElementById("agentState");
+		if (element) {
+			element.textContent = JSON.stringify(state, null, 2);
+		}
+	} catch (error) {
+		console.error("Failed to read agent state", error);
+	} finally {
+		readingState = false;
+	}
+}
+
+async function frameRequestCallback() {
 	// Resize camera and renderer according to current canvas size
 	viewport.resize(renderer, camera, simulationResolution);
 
 	// Per-tick simulation
 	if (playback.shouldAdvance()) {
 		agents.compute(renderer);
+	}
+
+	if (playback.paused) {
+		void updateAgentDebug();
 	}
 
 	// Render world

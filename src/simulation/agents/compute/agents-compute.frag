@@ -133,9 +133,10 @@ float getNavigationWeight(ivec2 cell, int layer) {
 	return texelFetch(uNavigationMapTextureArray, ivec3(cell, layer), 0).r;
 }
 
+// angleDiff returns [0, 1] where 0 is same direction, and 1 opposite.
 float angleDiff(float a, float b) {
 	float d = abs(a - b);
-	return min(d, 2.0f * PI - d);
+	return min(d, 2.0f * PI - d) / PI;
 }
 
 // steer sets agent's direction.
@@ -146,28 +147,65 @@ void steer(inout State state) {
 	// Agent Y is down-positive, while texture Y is up-positive.
 	ivec2 navigationPosition = ivec2(downscaledPosition.x, navigationMapSize.y - 1 - downscaledPosition.y);
 
-	ivec2 bestDirectionVec = ivec2(0);
-	float smallestWeight = UNREACHABLE;
+	float navigationCosts[8];
+	float minCost = UNREACHABLE;
+	float maxCost = -UNREACHABLE;
+	int i = 0;
 	for (int x = -1; x <= 1; x++) {
 		for (int y = -1; y <= 1; y++) {
 			if (x == 0 && y == 0) {
 				continue;
 			}
 
-			float navigationWeight = getNavigationWeight(navigationPosition + ivec2(x, -y), state.destinationIndex);
+			float cost = getNavigationWeight(navigationPosition + ivec2(x, -y), state.destinationIndex);
 
-			float direction = atan(float(y), float(x));
-			float steeringWeight = angleDiff(state.direction, direction) * 2000.0f;
+			navigationCosts[i] = cost;
 
-			float weight = navigationWeight + steeringWeight;
-
-			if (weight < smallestWeight) {
-				bestDirectionVec = ivec2(x, y);
-				smallestWeight = weight;
+			if (cost < UNREACHABLE) {
+				minCost = min(minCost, cost);
+				maxCost = max(maxCost, cost);
 			}
+
+			i++;
 		}
 	}
 
+	if (minCost == UNREACHABLE) {
+		return;
+	}
+
+	float costRange = max(maxCost - minCost, 0.0001f);
+
+	ivec2 bestDirectionVec = ivec2(0);
+	float smallestCost = UNREACHABLE;
+	i = 0;
+	for (int x = -1; x <= 1; x++) {
+		for (int y = -1; y <= 1; y++) {
+			if (x == 0 && y == 0) {
+				continue;
+			}
+
+			if (navigationCosts[i] < UNREACHABLE) {
+				// navigationCost ranges from 0 to 1
+				float navigationCost = (navigationCosts[i] - minCost) / costRange;
+
+				float direction = atan(float(y), float(x));
+				// steeringCost ranges from 0 to 1
+				float steeringCost = angleDiff(state.direction, direction);
+
+				float cost = navigationCost + 2.0f * pow(steeringCost, 2.0f);
+
+				if (cost < smallestCost) {
+					bestDirectionVec = ivec2(x, y);
+					smallestCost = cost;
+				}
+			}
+
+			i++;
+		}
+	}
+
+	// Compare every candidate against the same incoming heading.
 	state.direction = atan(float(bestDirectionVec.y), float(bestDirectionVec.x));
 }
 

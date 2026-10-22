@@ -201,4 +201,24 @@ export class Agents {
 		this.renderMaterial.uniforms.uStateTexture.value =
 			this.computeTargetRead.texture;
 	}
+
+	public async read0thAgentState(renderer: THREE.WebGLRenderer) {
+		const pixel = new Float32Array(4);
+
+		await renderer.readRenderTargetPixelsAsync(
+			this.computeTargetRead,
+			0,
+			0,
+			1,
+			1,
+			pixel,
+		);
+
+		return {
+			x: pixel[0],
+			y: pixel[1],
+			direction: pixel[2],
+			destinationIndex: Math.round(pixel[3]),
+		};
+	}
 }

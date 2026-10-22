@@ -44,11 +44,6 @@
         <fieldset class="debug">
           <legend>Отладка</legend>
 
-          <div class="field">
-            <button id="toggleSimulation" type="button">Пауза</button>
-            <button id="stepSimulation" type="button" disabled>Шаг</button>
-          </div>
-
           <label>
             <input id="showTerrain" type="checkbox" checked>
             Ландшафт
@@ -87,6 +82,16 @@
             <input id="showAgents" type="checkbox" checked>
             Агенты
           </label>
+
+          <div class="field">
+            <button id="toggleSimulation" type="button">Пауза</button>
+            <button id="stepSimulation" type="button" disabled>Шаг</button>
+          </div>
+
+          <details id="agentState">
+            <summary>Состояние агента</summary>
+          </details>
+
         </fieldset>
     </aside>
 
