@@ -7,6 +7,7 @@ import { CoarseMap } from "./simulation/coarse-map/coarse-map";
 import { Destination } from "./simulation/destinations/destination";
 import { Destinations } from "./simulation/destinations/destinations";
 import { NavigationMaps } from "./simulation/navigation-map/navigation-maps";
+import { SimulationPlayback } from "./simulation/playback";
 import { SimulationResolution } from "./simulation/simulation-size";
 
 const SIMULATION_DOWNSCALE_FACTOR = 8;
@@ -85,11 +86,17 @@ controls.bindInputPair('agentCount');
 controls.bindInputPair('agentSpeed');
 controls.bindInputPair('agentInertia');
 
+const playback = new SimulationPlayback();
+controls.bindSimulationPlayback(playback);
+
 function frameRequestCallback() {
 	// Resize camera and renderer according to current canvas size
 	viewport.resize(renderer, camera, simulationResolution);
 
-	agents.compute(renderer);
+	// Per-tick simulation
+	if (playback.shouldAdvance()) {
+		agents.compute(renderer);
+	}
 
 	// Render world
 	renderer.setRenderTarget(null);

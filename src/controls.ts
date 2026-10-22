@@ -1,6 +1,32 @@
 import * as THREE from "three";
 
 import { NavigationMaps } from "./simulation/navigation-map/navigation-maps";
+import type { SimulationPlayback } from "./simulation/playback";
+
+export function bindSimulationPlayback(playback: SimulationPlayback): void {
+	const toggle = document.getElementById("toggleSimulation");
+	const step = document.getElementById("stepSimulation");
+	if (!(toggle instanceof HTMLButtonElement) || !(step instanceof HTMLButtonElement)) {
+		throw new Error("Simulation playback controls not found");
+	}
+
+	const updateControls = (): void => {
+		toggle.textContent = playback.paused ? "Продолжить" : "Пауза";
+		step.disabled = !playback.paused;
+	};
+
+	toggle.addEventListener("click", () => {
+		if (playback.paused) {
+			playback.resume();
+		} else {
+			playback.pause();
+		}
+		updateControls();
+	});
+
+	step.addEventListener("click", () => playback.step());
+	updateControls();
+}
 
 export function bindInputPair(idPrefix: string) {
 	const range = document.getElementById(idPrefix + 'Range') as HTMLInputElement;
