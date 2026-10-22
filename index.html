@@ -16,60 +16,49 @@
   <main>
     <aside>
       <fieldset class="control">
-        <label>
-          Агенты
-          <input id="agentCount" type="range" min="1" max="100000" value="1000">
-          <output id="agentCountOutput"></output>
-        </label>
 
-        <label>
-          Скорость агентов
-          <input id="agentSpeed" type="range" min="0.5" max="10.0" value="2.0" step="0.25">
-          <output id="agentSpeedOutput"></output>
-        </label>
+        <label> Агенты </label>
+        <div class="input-pair">
+          <input id="agentCountRange" type="range" min="1" max="100000" value="1000">
+          <input id="agentCountNumber" type="number" min="1" max="100000" value="1000">
+        </div>
 
-        <label>
-          Инерция направления
-          <input id="turnSmoothness" type="range" min="0" max="555" value="0.6" step="0.1">
-          <output id="turnSmoothnessOutput"></output>
-        </label>
+        <label> Скорость агентов </label>
+        <div class="input-pair">
+          <input id="agentSpeedRange" type="range" min="0.5" max="10.0" value="2.0" step="0.25">
+          <input id="agentSpeedNumber" type="number" min="0.5" max="10.0" value="2.0" step="0.25">
+        </div>
+
+        <label> Инерция направления </label>
+        <div class="input-pair">
+          <input id="agentInertiaRange" type="range" min="0" max="555" value="0.6" step="0.1">
+          <input id="agentInertiaNumber" type="number" min="0" max="555" value="0.6" step="0.1">
+        </div>
       </fieldset>
 
       <fieldset class="debug">
         <legend>Отладка</legend>
 
-        <label>
-          <input id="showTerrain" type="checkbox" checked>
-          Ландшафт
-        </label>
+        <input id="showTerrain" type="checkbox" checked>
+        <label for="showTerrain"> Ландшафт </label> <br />
 
-        <label>
-          <input id="showDestinations" type="checkbox" checked>
-          Пункты назначения
-        </label>
+        <input id="showDestinations" type="checkbox" checked>
+        <label> Пункты назначения </label> <br />
 
-        <label>
-          <input id="showCoarseMap" type="checkbox">
-          Карта проходимости
-        </label>
+        <input id="showCoarseMap" type="checkbox">
+        <label> Карта проходимости </label> <br />
 
         <fieldset>
           <legend>Карты навигации</legend>
 
-          <label>
-            <input id="hideNavigationMap" name="navigationMap" value="none" type="radio" checked>
-            скрыть
-          </label>
+          <input id="hideNavigationMap" name="navigationMap" value="none" type="radio" checked>
+          <label> скрыть </label>
 
-          <label>
-            <input name="navigationMap" value=0 type="radio">
-            1
-          </label>
+          <input name="navigationMap" value=0 type="radio">
+          <label> 1 </label>
 
-          <label>
-            <input name="navigationMap" value=1 type="radio">
-            2
-          </label>
+          <input name="navigationMap" value=1 type="radio">
+          <label> 2 </label>
         </fieldset>
 
         <label>

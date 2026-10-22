@@ -13,9 +13,9 @@ export function getAgentSpeed(): number {
 
 export function getAgentCount(): number {
 	var agentCount = 1000;
-	const agentSpeedElement = document.getElementById("agentCount") as HTMLInputElement;
-	if (agentSpeedElement !== null) {
-		agentCount = parseInt(agentSpeedElement.value);
+	const agentCountElement = document.getElementById("agentCountNumber") as HTMLInputElement;
+	if (agentCountElement !== null) {
+		agentCount = parseInt(agentCountElement.value);
 	}
 	return agentCount;
 }
@@ -56,5 +56,18 @@ export function setupNavigationMapsDebug(navigationMaps: NavigationMaps) {
 				}
 			}
 		});
+	});
+}
+
+export function setupInputPair(idPrefix: string) {
+	const range = document.getElementById(idPrefix + 'Range') as HTMLInputElement;
+	const number = document.getElementById(idPrefix + 'Number') as HTMLInputElement;
+
+	range.addEventListener('input', () => {
+		number.value = range.value;
+	});
+
+	number.addEventListener('input', () => {
+		range.value = number.value;
 	});
 }

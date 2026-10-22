@@ -81,6 +81,10 @@ controls.bindVisibilityToggle("showAgents", agents.mesh);
 
 controls.setupNavigationMapsDebug(navigationMaps);
 
+controls.setupInputPair('agentCount');
+controls.setupInputPair('agentSpeed');
+controls.setupInputPair('agentInertia');
+
 function frameRequestCallback() {
 	// Resize camera and renderer according to current canvas size
 	viewport.resize(renderer, camera, simulationResolution);
