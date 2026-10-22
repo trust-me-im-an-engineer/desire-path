@@ -69,8 +69,8 @@ const agents = new Agents(
 	navigationMaps.textureArray,
 	renderer,
 	5,
-	controls.getAgentSpeed(),
-	controls.getAgentCount(),
+	(document.getElementById('agentSpeedNumber') as HTMLInputElement).valueAsNumber,
+	(document.getElementById('agentCountNumber') as HTMLInputElement).valueAsNumber,
 );
 scene.add(agents.mesh);
 
@@ -79,11 +79,11 @@ controls.bindVisibilityToggle("showDestinations", destinations.group);
 controls.bindVisibilityToggle("showCoarseMap", coarseMap.mesh);
 controls.bindVisibilityToggle("showAgents", agents.mesh);
 
-controls.setupNavigationMapsDebug(navigationMaps);
+controls.bindNavigationMapsDebug(navigationMaps);
 
-controls.setupInputPair('agentCount');
-controls.setupInputPair('agentSpeed');
-controls.setupInputPair('agentInertia');
+controls.bindInputPair('agentCount');
+controls.bindInputPair('agentSpeed');
+controls.bindInputPair('agentInertia');
 
 function frameRequestCallback() {
 	// Resize camera and renderer according to current canvas size

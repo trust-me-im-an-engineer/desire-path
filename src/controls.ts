@@ -2,22 +2,23 @@ import * as THREE from "three";
 
 import { NavigationMaps } from "./simulation/navigation-map/navigation-maps";
 
-export function getAgentSpeed(): number {
-	var agentSpeed = 1.0;
-	const agentSpeedElement = document.getElementById("agentSpeed") as HTMLInputElement;
-	if (agentSpeedElement !== null) {
-		agentSpeed = parseFloat(agentSpeedElement.value);
-	}
-	return agentSpeed;
-}
+export function bindInputPair(idPrefix: string) {
+	const range = document.getElementById(idPrefix + 'Range') as HTMLInputElement;
+	const number = document.getElementById(idPrefix + 'Number') as HTMLInputElement;
 
-export function getAgentCount(): number {
-	var agentCount = 1000;
-	const agentCountElement = document.getElementById("agentCountNumber") as HTMLInputElement;
-	if (agentCountElement !== null) {
-		agentCount = parseInt(agentCountElement.value);
-	}
-	return agentCount;
+	range.addEventListener('input', () => {
+		number.value = range.value;
+	});
+
+	number.addEventListener('input', () => {
+		range.value = number.value;
+	});
+
+	number.addEventListener('keydown', (event) => {
+		if (event.key === 'Enter') {
+			number.blur();
+		}
+	});
 }
 
 export function bindVisibilityToggle(id: string, object: THREE.Object3D): void {
@@ -32,7 +33,7 @@ export function bindVisibilityToggle(id: string, object: THREE.Object3D): void {
 	});
 }
 
-export function setupNavigationMapsDebug(navigationMaps: NavigationMaps) {
+export function bindNavigationMapsDebug(navigationMaps: NavigationMaps) {
 	const hideNavigationMapButton = document.getElementById("hideNavigationMap");
 	if (hideNavigationMapButton instanceof HTMLInputElement) {
 		navigationMaps.mesh.visible = !hideNavigationMapButton.checked;
@@ -56,24 +57,5 @@ export function setupNavigationMapsDebug(navigationMaps: NavigationMaps) {
 				}
 			}
 		});
-	});
-}
-
-export function setupInputPair(idPrefix: string) {
-	const range = document.getElementById(idPrefix + 'Range') as HTMLInputElement;
-	const number = document.getElementById(idPrefix + 'Number') as HTMLInputElement;
-
-	range.addEventListener('input', () => {
-		number.value = range.value;
-	});
-
-	number.addEventListener('input', () => {
-		range.value = number.value;
-	});
-
-	number.addEventListener('keydown', (event) => {
-		if (event.key === 'Enter') {
-			number.blur();
-		}
 	});
 }
