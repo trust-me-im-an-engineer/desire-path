@@ -1,9 +1,9 @@
 import * as THREE from "three";
 
+import type { Playback } from "./playback";
 import { NavigationMaps } from "./simulation/navigation-map/navigation-maps";
-import type { SimulationPlayback } from "./simulation/playback";
 
-export function bindSimulationPlayback(playback: SimulationPlayback): void {
+export function bindPlayback(playback: Playback): void {
 	const toggle = document.getElementById("toggleSimulation");
 	const step = document.getElementById("stepSimulation");
 	if (!(toggle instanceof HTMLButtonElement) || !(step instanceof HTMLButtonElement)) {

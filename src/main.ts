@@ -2,12 +2,12 @@ import * as THREE from "three";
 import * as controls from "./controls";
 import * as viewport from "./viewport";
 
+import { Playback } from "./playback";
 import { Agents } from "./simulation/agents/agents";
 import { CoarseMap } from "./simulation/coarse-map/coarse-map";
 import { Destination } from "./simulation/destinations/destination";
 import { Destinations } from "./simulation/destinations/destinations";
 import { NavigationMaps } from "./simulation/navigation-map/navigation-maps";
-import { SimulationPlayback } from "./simulation/playback";
 import { SimulationResolution } from "./simulation/simulation-size";
 
 const scene = new THREE.Scene();
@@ -88,8 +88,8 @@ controls.bindInputPair('agentSpeed', value => agents.setSpeed(value));
 controls.bindInputPair('agentInertia', value => agents.setSteeringStrength(value));
 controls.bindInputPair('agentSteeringExponent', value => agents.setSteeringExponent(value));
 
-const playback = new SimulationPlayback();
-controls.bindSimulationPlayback(playback);
+const playback = new Playback();
+controls.bindPlayback(playback);
 
 let readingState = false;
 

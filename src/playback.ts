@@ -1,4 +1,4 @@
-export class SimulationPlayback {
+export class Playback {
 	public paused = false;
 	private pendingSteps = 0;
 
