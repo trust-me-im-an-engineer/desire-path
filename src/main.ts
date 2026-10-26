@@ -53,36 +53,13 @@ controls.bindVisibilityToggle("showAgents", simulation.agents.mesh);
 const playback = new Playback();
 controls.bindPlayback(playback);
 
-let readingState = false;
-
-async function updateAgentDebug() {
-	if (readingState) return;
-
-	readingState = true;
-	try {
-		const state = await simulation.agents.read0thAgentState(renderer);
-		const element = document.getElementById("agentState");
-		if (element) {
-			element.textContent = JSON.stringify(state, null, 2);
-		}
-	} catch (error) {
-		console.error("Failed to read agent state", error);
-	} finally {
-		readingState = false;
-	}
-}
-
-async function frameRequestCallback() {
+function frameRequestCallback() {
 	// Resize camera and renderer according to current canvas size
 	viewport.resize(renderer, camera, simulation.resolution);
 
 	// Per-tick simulation
 	if (playback.shouldAdvance()) {
 		simulation.update(renderer);
-	}
-
-	if (playback.paused) {
-		void updateAgentDebug();
 	}
 
 	// Render world
