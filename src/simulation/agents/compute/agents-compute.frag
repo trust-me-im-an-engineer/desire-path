@@ -93,9 +93,24 @@ float generateRandom(State state, Properties properties) {
 		(1.0f / 16777216.0f);
 }
 
-// isDestinationReached checks if agent is closer to its destination, than destination's weight.
-bool isDestinationReached(State state, Destination destination) {
-	return distance(state.position, destination.position) < destination.weight;
+// Check whether the next movement segment touches or enters the destination circle.
+bool isDestinationReached(State state, Destination destination, float speed) {
+	vec2 stepVec = vec2(cos(state.direction), sin(state.direction)) * speed;
+	vec2 toDestination = destination.position - state.position;
+	float movementLengthSquared = dot(stepVec, stepVec);
+
+	// where along the next movement segment the agent is closest to the destination center
+	float closestFraction = 0.0f;
+	if (movementLengthSquared > 0.0f) {
+		// project toDestination vector onto the movement vector
+		closestFraction = dot(toDestination, stepVec) / movementLengthSquared;
+
+		// normalize
+		closestFraction = clamp(closestFraction, 0.0f, 1.0f);
+	}
+
+	vec2 closestVec = toDestination - closestFraction * stepVec;
+	return dot(closestVec, closestVec) <= destination.weight * destination.weight;
 }
 
 // chooseNextDestination chooses a new destination randomly according to weights.
@@ -193,7 +208,7 @@ void steer(inout State state) {
 				// steeringCost ranges from 0 to 1
 				float steeringCost = angleDiff(state.direction, direction);
 
-				float cost = navigationCost + 2.0f * pow(steeringCost, 2.0f);
+				float cost = navigationCost + 1.0f * pow(steeringCost, 1.0f);
 
 				if (cost < smallestCost) {
 					bestDirectionVec = ivec2(x, y);
@@ -223,12 +238,15 @@ void main() {
 
 	random = generateRandom(state, properties);
 
-	if (isDestinationReached(state, destination)) {
+	steer(state);
+
+	if (isDestinationReached(state, destination, properties.speed)) {
 		destination = chooseNextDestination(destination);
 		state.destinationIndex = destination.index;
-	}
 
-	steer(state);
+		vec2 toDestination = destination.position - state.position;
+		state.direction = atan(toDestination.y, toDestination.x);
+	}
 
 	move(state, properties.speed);
 
