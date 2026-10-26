@@ -14,6 +14,7 @@ uniform sampler2D uTerrainTexture;
 uniform highp sampler2DArray uNavigationMapTextureArray;
 
 uniform float uDownscaleFactor;
+uniform float uAgentSpeed;
 uniform float uSteeringStrength;
 uniform float uSteeringExponent;
 
@@ -50,10 +51,11 @@ struct Properties {
 };
 
 // readProperties reads agent properties from properties texture.
+// Live multipliers applied.
 Properties readProperties(ivec2 textureCoord) {
 	vec2 packed = texelFetch(uPropertiesTexture, textureCoord, 0).xy;
 
-	return Properties(packed.x, packed.y);
+	return Properties(packed.x, packed.y * uAgentSpeed);
 }
 
 // Destination represents destination properties.

@@ -34,11 +34,11 @@ export class Agents {
 		public count: number,
 
 	) {
-		// Initialize static properties texture (seed + speed)
+		// Initialize static properties texture (seed + per-agent speed multiplier).
 		const propertiesTextureData = new Float32Array(2 * TEXTURES_WIDTH ** 2);
 		for (let i = 0; i < propertiesTextureData.length; i += 2) {
 			propertiesTextureData[i] = Math.random();
-			propertiesTextureData[i + 1] = speed * (0.5 + Math.random());
+			propertiesTextureData[i + 1] = 0.5 + Math.random();
 		}
 		const propertiesTexture = new THREE.DataTexture(
 			propertiesTextureData,
@@ -130,6 +130,7 @@ export class Agents {
 			uniforms: {
 				uPreviousStateTexture: { value: this.computeTargetRead.texture },
 				uPropertiesTexture: { value: propertiesTexture },
+				uAgentSpeed: { value: speed },
 
 				uDestinationsTexture: { value: destinations.texture },
 				uDestinationsTotalWeight: { value: destinations.totalWeight },
@@ -188,6 +189,13 @@ export class Agents {
 		this.mesh.frustumCulled = false;
 
 		this.mesh.position.z = depth;
+	}
+
+	public setSpeed(value: number): void {
+		if (!Number.isFinite(value) || value < 0) {
+			throw new RangeError("Agent speed must be finite and nonnegative");
+		}
+		this.computeMaterial.uniforms.uAgentSpeed.value = value;
 	}
 
 	public setCount(value: number): void {
