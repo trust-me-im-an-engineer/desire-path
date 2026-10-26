@@ -28,8 +28,6 @@ const simulationOptions: SimulationOptions = {
 		{ x: 650, y: 264, weight: 12 },
 		{ x: 501, y: 500, weight: 12 },
 	],
-	agentSpeed: (document.getElementById('agentSpeedNumber') as HTMLInputElement).valueAsNumber,
-	agentCount: (document.getElementById('agentCountNumber') as HTMLInputElement).valueAsNumber,
 }
 const simulation = new Simulation(renderer, terrainTexture, simulationOptions);
 scene.add(simulation.group);

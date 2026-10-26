@@ -15,6 +15,7 @@ const AGENT_WIDTH = 10;
 
 export class Agents {
 	public readonly mesh: THREE.Mesh<THREE.InstancedBufferGeometry>;
+	public count = 1000;
 
 	private computeTargetRead: THREE.WebGLRenderTarget;
 	private computeTargetWrite: THREE.WebGLRenderTarget;
@@ -30,9 +31,6 @@ export class Agents {
 		navigationMapTextureArray: THREE.DataArrayTexture,
 		renderer: THREE.WebGLRenderer,
 		depth: number,
-		speed: number,
-		public count: number,
-
 	) {
 		// Initialize static properties texture (seed + per-agent speed multiplier).
 		const propertiesTextureData = new Float32Array(2 * TEXTURES_WIDTH ** 2);
@@ -130,7 +128,7 @@ export class Agents {
 			uniforms: {
 				uPreviousStateTexture: { value: this.computeTargetRead.texture },
 				uPropertiesTexture: { value: propertiesTexture },
-				uAgentSpeed: { value: speed },
+				uAgentSpeed: { value: 2 },
 
 				uDestinationsTexture: { value: destinations.texture },
 				uDestinationsTotalWeight: { value: destinations.totalWeight },
@@ -178,7 +176,7 @@ export class Agents {
 				-AGENT_LENGTH / 2, AGENT_WIDTH / 2, 0,
 			], 3),
 		);
-		geometry.instanceCount = count;
+		geometry.instanceCount = this.count;
 
 		this.mesh = new THREE.Mesh(
 			geometry,

@@ -9,8 +9,6 @@ import { NavigationMaps } from "./navigation-map/navigation-maps";
 export type SimulationOptions = {
 	downscaleFactor: number;
 	destinations: readonly { x: number; y: number; weight: number }[];
-	agentSpeed: number;
-	agentCount: number;
 }
 
 export class SimulationResolution {
@@ -83,8 +81,6 @@ export class Simulation {
 			this.navigationMaps.textureArray,
 			renderer,
 			4,
-			options.agentSpeed,
-			options.agentCount,
 		);
 
 		this.group.add(
