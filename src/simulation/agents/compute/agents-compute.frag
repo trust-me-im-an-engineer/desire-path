@@ -138,6 +138,7 @@ Destination chooseNextDestination(Destination currentDestination) {
 
 // navigationWeight returns weight of given cell in navigation map.
 // Cells out of bounds returned as UNREACHABLE.
+// weight is divided by downscale factor, so it doesn't affect steering.
 float getNavigationWeight(ivec2 cell, int layer) {
 	ivec2 size = textureSize(uNavigationMapTextureArray, 0).xy;
 	if (any(lessThan(cell, ivec2(0))) ||
@@ -145,7 +146,7 @@ float getNavigationWeight(ivec2 cell, int layer) {
 		return UNREACHABLE;
 	}
 
-	return texelFetch(uNavigationMapTextureArray, ivec3(cell, layer), 0).r;
+	return texelFetch(uNavigationMapTextureArray, ivec3(cell, layer), 0).r / uDownscaleFactor;
 }
 
 // angleDiff returns [0, 1] where 0 is same direction, and 1 opposite.
@@ -162,66 +163,39 @@ void steer(inout State state) {
 	// Agent Y is down-positive, while texture Y is up-positive.
 	ivec2 navigationPosition = ivec2(downscaledPosition.x, navigationMapSize.y - 1 - downscaledPosition.y);
 
-	float navigationCosts[8];
-	float minCost = UNREACHABLE;
-	float maxCost = -UNREACHABLE;
-	int i = 0;
-	for (int x = -1; x <= 1; x++) {
-		for (int y = -1; y <= 1; y++) {
-			if (x == 0 && y == 0) {
-				continue;
-			}
-
-			float cost = getNavigationWeight(navigationPosition + ivec2(x, -y), state.destinationIndex);
-
-			navigationCosts[i] = cost;
-
-			if (cost < UNREACHABLE) {
-				minCost = min(minCost, cost);
-				maxCost = max(maxCost, cost);
-			}
-
-			i++;
-		}
-	}
-
-	if (minCost == UNREACHABLE) {
-		return;
-	}
-
-	float costRange = max(maxCost - minCost, 0.0001f);
-
 	ivec2 bestDirectionVec = ivec2(0);
 	float smallestCost = UNREACHABLE;
-	i = 0;
+	bool foundDirection = false;
 	for (int x = -1; x <= 1; x++) {
 		for (int y = -1; y <= 1; y++) {
 			if (x == 0 && y == 0) {
 				continue;
 			}
 
-			if (navigationCosts[i] < UNREACHABLE) {
-				// navigationCost ranges from 0 to 1
-				float navigationCost = (navigationCosts[i] - minCost) / costRange;
-
-				float direction = atan(float(y), float(x));
-				// steeringCost ranges from 0 to 1
-				float steeringCost = angleDiff(state.direction, direction);
-
-				float cost = navigationCost + 1.0f * pow(steeringCost, 1.0f);
-
-				if (cost < smallestCost) {
-					bestDirectionVec = ivec2(x, y);
-					smallestCost = cost;
-				}
+			float navigationCost = getNavigationWeight(navigationPosition + ivec2(x, -y), state.destinationIndex);
+			if (navigationCost >= UNREACHABLE) {
+				continue;
 			}
 
-			i++;
+			float direction = atan(float(y), float(x));
+
+			// steeringCost ranges from 0 to 1
+			float steeringCost = angleDiff(state.direction, direction);
+
+			float cost = navigationCost + 0.0f * pow(steeringCost, 1.0f);
+
+			if (cost < smallestCost) {
+				bestDirectionVec = ivec2(x, y);
+				smallestCost = cost;
+				foundDirection = true;
+			}
 		}
 	}
 
 	// Compare every candidate against the same incoming heading.
-	state.direction = atan(float(bestDirectionVec.y), float(bestDirectionVec.x));
+	if (foundDirection) {
+		state.direction = atan(float(bestDirectionVec.y), float(bestDirectionVec.x));
+	}
 }
 
 // move sets agent's new posision based on its position and direction.
