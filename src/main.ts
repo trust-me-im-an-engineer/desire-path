@@ -10,8 +10,6 @@ import { NavigationMaps } from "./simulation/navigation-map/navigation-maps";
 import { SimulationPlayback } from "./simulation/playback";
 import { SimulationResolution } from "./simulation/simulation-size";
 
-const SIMULATION_DOWNSCALE_FACTOR = 8;
-
 const scene = new THREE.Scene();
 
 const canvas = <HTMLCanvasElement>document.getElementById("simulationCanvas");
@@ -24,14 +22,14 @@ camera.top = 0;
 camera.position.z = 100;
 camera.updateProjectionMatrix();
 
-const terrainTexture = await new THREE.TextureLoader().loadAsync("assets/2.png");
+const terrainTexture = await new THREE.TextureLoader().loadAsync("assets/5.png");
 terrainTexture.generateMipmaps = false;
 terrainTexture.colorSpace = THREE.SRGBColorSpace;
 
 const simulationResolution = new SimulationResolution(
 	terrainTexture.width,
 	terrainTexture.height,
-	SIMULATION_DOWNSCALE_FACTOR,
+	8,
 );
 
 const terrainMesh = new THREE.Mesh(
