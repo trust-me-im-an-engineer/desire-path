@@ -1,12 +1,17 @@
 import * as THREE from "three";
+import { FullScreenQuad } from "three/addons/postprocessing/Pass.js";
 
-import { SimulationMap } from "../simulation-map";
 import type { SimulationResolution } from "../simulation-size";
 
 import fragmentShader from './coarse-map.frag?raw';
 import vertexShader from './coarse-map.vert?raw';
 
-export class CoarseMap extends SimulationMap {
+export class CoarseMap {
+	public readonly mesh: THREE.Mesh;
+	public readonly computeTarget: THREE.WebGLRenderTarget;
+
+	private readonly pass: FullScreenQuad;
+
 	constructor(
 		private simulationResolution: SimulationResolution,
 		terrainTexture: THREE.Texture,
@@ -27,12 +32,41 @@ export class CoarseMap extends SimulationMap {
 			fragmentShader: fragmentShader,
 		});
 
-		super(
-			simulationResolution,
-			coarseMapShaderMaterial,
-			texture => new THREE.MeshBasicMaterial({ map: texture }),
+		this.computeTarget = new THREE.WebGLRenderTarget(
+			simulationResolution.downscaled.width,
+			simulationResolution.downscaled.height,
+			{
+				format: THREE.RedFormat,
+				type: THREE.FloatType,
+				minFilter: THREE.NearestFilter,
+				magFilter: THREE.NearestFilter,
+				depthBuffer: false,
+				stencilBuffer: false,
+				generateMipmaps: false,
+				colorSpace: THREE.NoColorSpace,
+			},
+		);
+
+		this.pass = new FullScreenQuad(coarseMapShaderMaterial);
+
+		this.mesh = new THREE.Mesh(
+			new THREE.PlaneGeometry(
+				simulationResolution.native.width,
+				simulationResolution.native.height,
+			),
+			new THREE.MeshBasicMaterial({ map: this.computeTarget.texture }),
+		);
+
+		this.mesh.position.set(
+			simulationResolution.native.width / 2,
+			-simulationResolution.native.height / 2,
 			2,
 		);
+	}
+
+	compute(renderer: THREE.WebGLRenderer): void {
+		renderer.setRenderTarget(this.computeTarget);
+		this.pass.render(renderer);
 	}
 
 	toArray(renderer: THREE.WebGLRenderer): Float32Array {
