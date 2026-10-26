@@ -3,7 +3,8 @@ import * as controls from "./controls";
 import * as viewport from "./viewport";
 
 import { Playback } from "./playback";
-import { Simulation, SimulationOptions } from "./simulation/simulation";
+import { Destination } from "./simulation/destinations/destination";
+import { Simulation, SimulationResolution, type SimulationOptions } from "./simulation/simulation";
 
 const scene = new THREE.Scene();
 
@@ -21,12 +22,13 @@ const terrainTexture = await new THREE.TextureLoader().loadAsync("assets/5.png")
 terrainTexture.generateMipmaps = false;
 terrainTexture.colorSpace = THREE.SRGBColorSpace;
 
+const resolution = new SimulationResolution(terrainTexture.width, terrainTexture.height, 8);
 const simulationOptions: SimulationOptions = {
-	downscaleFactor: 8,
+	resolution,
 	destinations: [
-		{ x: 200, y: 270, weight: 12 },
-		{ x: 650, y: 264, weight: 12 },
-		{ x: 501, y: 500, weight: 12 },
+		new Destination(new THREE.Vector2(200, 270), 12, resolution),
+		new Destination(new THREE.Vector2(650, 264), 12, resolution),
+		new Destination(new THREE.Vector2(501, 500), 12, resolution),
 	],
 }
 const simulation = new Simulation(renderer, terrainTexture, simulationOptions);

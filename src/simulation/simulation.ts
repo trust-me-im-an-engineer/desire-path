@@ -2,13 +2,13 @@ import * as THREE from "three";
 
 import { Agents } from "./agents/agents";
 import { CoarseMap } from "./coarse-map/coarse-map";
-import { Destination } from "./destinations/destination";
+import type { Destination } from "./destinations/destination";
 import { Destinations } from "./destinations/destinations";
 import { NavigationMaps } from "./navigation-map/navigation-maps";
 
 export type SimulationOptions = {
-	downscaleFactor: number;
-	destinations: readonly { x: number; y: number; weight: number }[];
+	resolution: SimulationResolution;
+	destinations: readonly Destination[];
 }
 
 export class SimulationResolution {
@@ -42,11 +42,7 @@ export class Simulation {
 		terrainTexture: THREE.Texture,
 		options: SimulationOptions,
 	) {
-		this.resolution = new SimulationResolution(
-			terrainTexture.width,
-			terrainTexture.height,
-			options.downscaleFactor,
-		);
+		this.resolution = options.resolution;
 		const { native } = this.resolution;
 		this.terrainMesh = new THREE.Mesh(
 			new THREE.PlaneGeometry(native.width, native.height),
@@ -54,13 +50,7 @@ export class Simulation {
 		);
 		this.terrainMesh.position.set(native.width / 2, -native.height / 2);
 
-		this.destinations = new Destinations(options.destinations.map(destination =>
-			new Destination(
-				new THREE.Vector2(destination.x, destination.y),
-				destination.weight,
-				this.resolution,
-			),
-		));
+		this.destinations = new Destinations([...options.destinations]);
 
 		this.coarseMap = new CoarseMap(this.resolution, terrainTexture);
 		this.coarseMap.compute(renderer);
