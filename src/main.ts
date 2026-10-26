@@ -4,7 +4,8 @@ import * as viewport from "./viewport";
 
 import { Playback } from "./playback";
 import { Destination } from "./simulation/destinations/destination";
-import { Simulation, SimulationResolution } from "./simulation/simulation";
+import { SimulationResolution } from "./simulation/resolution";
+import { Simulation } from "./simulation/simulation";
 
 const scene = new THREE.Scene();
 

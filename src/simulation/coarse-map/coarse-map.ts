@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { FullScreenQuad } from "three/addons/postprocessing/Pass.js";
 
-import type { SimulationResolution } from "../simulation";
+import type { SimulationResolution } from "../resolution";
 
 import fragmentShader from './coarse-map.frag?raw';
 import vertexShader from './coarse-map.vert?raw';

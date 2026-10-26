@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { FullScreenQuad } from "three/addons/postprocessing/Pass.js";
 
 import { Destinations } from "../destinations/destinations";
-import type { SimulationResolution } from "../simulation";
+import type { SimulationResolution } from "../resolution";
 
 import computeFragmentShader from './compute/agents-compute.frag?raw';
 import computeVertexShader from './compute/agents-compute.vert?raw';

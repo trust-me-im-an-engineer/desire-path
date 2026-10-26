@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-import type { SimulationResolution } from "./simulation/simulation";
+import type { SimulationResolution } from "./simulation/resolution";
 
 export function resize(
 	renderer: THREE.WebGLRenderer,
