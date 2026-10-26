@@ -14,7 +14,7 @@ const AGENT_LENGTH = 15;
 const AGENT_WIDTH = 10;
 
 export class Agents {
-	public readonly mesh: THREE.Mesh;
+	public readonly mesh: THREE.Mesh<THREE.InstancedBufferGeometry>;
 
 	private computeTargetRead: THREE.WebGLRenderTarget;
 	private computeTargetWrite: THREE.WebGLRenderTarget;
@@ -190,6 +190,13 @@ export class Agents {
 		this.mesh.position.z = depth;
 	}
 
+	public setCount(value: number): void {
+		if (!Number.isInteger(value) || value < 0 || value > TEXTURES_WIDTH ** 2) {
+			throw new RangeError("Agent count exceeds texture capacity or is not a nonnegative integer");
+		}
+		this.count = value;
+		this.mesh.geometry.instanceCount = value;
+	}
 
 	public setSteeringStrength(value: number): void {
 		this.computeMaterial.uniforms.uSteeringStrength.value = value;

@@ -85,7 +85,7 @@ controls.bindVisibilityToggle("showAgents", agents.mesh);
 
 controls.bindNavigationMapsDebug(navigationMaps);
 
-controls.bindInputPair('agentCount');
+controls.bindInputPair('agentCount', value => agents.setCount(value));
 controls.bindInputPair('agentSpeed');
 controls.bindInputPair('agentInertia', value => agents.setSteeringStrength(value));
 controls.bindInputPair('agentSteeringExponent', value => agents.setSteeringExponent(value));
