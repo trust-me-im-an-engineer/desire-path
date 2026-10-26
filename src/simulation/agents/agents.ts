@@ -138,6 +138,8 @@ export class Agents {
 				uDownscaleFactor: { value: simulationResolution.downscaleFactor },
 				uTerrainTexture: { value: terrainTexture },
 				uNavigationMapTextureArray: { value: navigationMapTextureArray },
+				uSteeringStrength: { value: 0 },
+				uSteeringExponent: { value: 1 },
 			},
 
 			vertexShader: computeVertexShader,
@@ -188,6 +190,14 @@ export class Agents {
 		this.mesh.position.z = depth;
 	}
 
+
+	public setSteeringStrength(value: number): void {
+		this.computeMaterial.uniforms.uSteeringStrength.value = value;
+	}
+
+	public setSteeringExponent(value: number): void {
+		this.computeMaterial.uniforms.uSteeringExponent.value = value;
+	}
 
 	public compute(renderer: THREE.WebGLRenderer): void {
 		renderer.setRenderTarget(this.computeTargetWrite);

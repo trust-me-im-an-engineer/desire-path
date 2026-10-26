@@ -10,9 +10,12 @@ uniform sampler2D uDestinationsTexture;
 uniform float uDestinationsTotalWeight;
 
 uniform ivec2 uSimulationResolution;
-uniform float uDownscaleFactor;
 uniform sampler2D uTerrainTexture;
 uniform highp sampler2DArray uNavigationMapTextureArray;
+
+uniform float uDownscaleFactor;
+uniform float uSteeringStrength;
+uniform float uSteeringExponent;
 
 out vec4 outState;
 
@@ -182,7 +185,7 @@ void steer(inout State state) {
 			// steeringCost ranges from 0 to 1
 			float steeringCost = angleDiff(state.direction, direction);
 
-			float cost = navigationCost + 0.0f * pow(steeringCost, 1.0f);
+			float cost = navigationCost + uSteeringStrength * pow(steeringCost, uSteeringExponent);
 
 			if (cost < smallestCost) {
 				bestDirectionVec = ivec2(x, y);

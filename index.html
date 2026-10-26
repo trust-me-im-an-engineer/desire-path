@@ -34,10 +34,18 @@
         </div>
 
         <div class="field">
-          Инерция направления
+          Сила инерции направления
           <div class="input-pair">
-            <input id="agentInertiaRange" type="range" min="0" max="555" value="0.6" step="0.1">
-            <input id="agentInertiaNumber" type="number" min="0" max="555" value="0.6" step="0.1">
+            <input id="agentInertiaRange" type="range" min="0" max="8" value="0.6" step="0.1">
+            <input id="agentInertiaNumber" type="number" min="0" max="8" value="0.6" step="0.1">
+          </div>
+        </div>
+
+        <div class="field">
+          Степень штрафа за поворот
+          <div class="input-pair">
+            <input id="agentSteeringExponentRange" type="range" min="0.1" max="8" value="1" step="0.1">
+            <input id="agentSteeringExponentNumber" type="number" min="0.1" max="8" value="1" step="0.1">
           </div>
         </div>
 

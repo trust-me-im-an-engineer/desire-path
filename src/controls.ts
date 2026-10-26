@@ -28,16 +28,24 @@ export function bindSimulationPlayback(playback: SimulationPlayback): void {
 	updateControls();
 }
 
-export function bindInputPair(idPrefix: string) {
+export function bindInputPair(idPrefix: string, onInput?: (value: number) => void) {
 	const range = document.getElementById(idPrefix + 'Range') as HTMLInputElement;
 	const number = document.getElementById(idPrefix + 'Number') as HTMLInputElement;
 
+	const updateValue = (): void => {
+		if (number.validity.valid && Number.isFinite(number.valueAsNumber)) {
+			onInput?.(number.valueAsNumber);
+		}
+	};
+
 	range.addEventListener('input', () => {
 		number.value = range.value;
+		updateValue();
 	});
 
 	number.addEventListener('input', () => {
 		range.value = number.value;
+		updateValue();
 	});
 
 	number.addEventListener('keydown', (event) => {
@@ -45,6 +53,8 @@ export function bindInputPair(idPrefix: string) {
 			number.blur();
 		}
 	});
+
+	updateValue();
 }
 
 export function bindVisibilityToggle(id: string, object: THREE.Object3D): void {

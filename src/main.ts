@@ -87,7 +87,8 @@ controls.bindNavigationMapsDebug(navigationMaps);
 
 controls.bindInputPair('agentCount');
 controls.bindInputPair('agentSpeed');
-controls.bindInputPair('agentInertia');
+controls.bindInputPair('agentInertia', value => agents.setSteeringStrength(value));
+controls.bindInputPair('agentSteeringExponent', value => agents.setSteeringExponent(value));
 
 const playback = new SimulationPlayback();
 controls.bindSimulationPlayback(playback);
