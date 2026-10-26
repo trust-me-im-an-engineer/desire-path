@@ -3,12 +3,7 @@ import * as controls from "./controls";
 import * as viewport from "./viewport";
 
 import { Playback } from "./playback";
-import { Agents } from "./simulation/agents/agents";
-import { CoarseMap } from "./simulation/coarse-map/coarse-map";
-import { Destination } from "./simulation/destinations/destination";
-import { Destinations } from "./simulation/destinations/destinations";
-import { NavigationMaps } from "./simulation/navigation-map/navigation-maps";
-import { SimulationResolution } from "./simulation/simulation-size";
+import { Simulation, SimulationOptions } from "./simulation/simulation";
 
 const scene = new THREE.Scene();
 
@@ -26,67 +21,30 @@ const terrainTexture = await new THREE.TextureLoader().loadAsync("assets/5.png")
 terrainTexture.generateMipmaps = false;
 terrainTexture.colorSpace = THREE.SRGBColorSpace;
 
-const simulationResolution = new SimulationResolution(
-	terrainTexture.width,
-	terrainTexture.height,
-	8,
-);
+const simulationOptions: SimulationOptions = {
+	downscaleFactor: 8,
+	destinations: [
+		{ x: 200, y: 270, weight: 12 },
+		{ x: 650, y: 264, weight: 12 },
+		{ x: 501, y: 500, weight: 12 },
+	],
+	agentSpeed: (document.getElementById('agentSpeedNumber') as HTMLInputElement).valueAsNumber,
+	agentCount: (document.getElementById('agentCountNumber') as HTMLInputElement).valueAsNumber,
+}
+const simulation = new Simulation(renderer, terrainTexture, simulationOptions);
+scene.add(simulation.group);
 
-const terrainMesh = new THREE.Mesh(
-	new THREE.PlaneGeometry(simulationResolution.native.width, simulationResolution.native.height),
-	new THREE.MeshBasicMaterial({ map: terrainTexture })
-);
-terrainMesh.position.set(simulationResolution.native.width / 2, -simulationResolution.native.height / 2);
+controls.bindVisibilityToggle("showTerrain", simulation.terrainMesh);
+controls.bindVisibilityToggle("showDestinations", simulation.destinations.group);
+controls.bindVisibilityToggle("showCoarseMap", simulation.coarseMap.mesh);
+controls.bindVisibilityToggle("showAgents", simulation.agents.mesh);
 
-const destinations = new Destinations([
-	new Destination(new THREE.Vector2(200, 270), 12, simulationResolution),
-	new Destination(new THREE.Vector2(650, 264), 12, simulationResolution),
-	new Destination(new THREE.Vector2(501, 500), 12, simulationResolution),
-]);
+controls.bindNavigationMapsDebug(simulation.navigationMaps);
 
-const coarseMap = new CoarseMap(simulationResolution, terrainTexture);
-
-coarseMap.compute(renderer);
-
-const navigationMaps = new NavigationMaps(
-	simulationResolution,
-	coarseMap,
-	destinations.items,
-	renderer,
-);
-navigationMaps.mesh.visible = false;
-
-const agents = new Agents(
-	simulationResolution,
-	terrainTexture,
-	coarseMap.computeTarget.texture,
-	destinations,
-	navigationMaps.textureArray,
-	renderer,
-	4,
-	(document.getElementById('agentSpeedNumber') as HTMLInputElement).valueAsNumber,
-	(document.getElementById('agentCountNumber') as HTMLInputElement).valueAsNumber,
-);
-
-scene.add(
-	terrainMesh,
-	coarseMap.mesh,
-	navigationMaps.mesh,
-	agents.mesh,
-	destinations.group,
-);
-
-controls.bindVisibilityToggle("showTerrain", terrainMesh);
-controls.bindVisibilityToggle("showDestinations", destinations.group);
-controls.bindVisibilityToggle("showCoarseMap", coarseMap.mesh);
-controls.bindVisibilityToggle("showAgents", agents.mesh);
-
-controls.bindNavigationMapsDebug(navigationMaps);
-
-controls.bindInputPair('agentCount', value => agents.setCount(value));
-controls.bindInputPair('agentSpeed', value => agents.setSpeed(value));
-controls.bindInputPair('agentInertia', value => agents.setSteeringStrength(value));
-controls.bindInputPair('agentSteeringExponent', value => agents.setSteeringExponent(value));
+controls.bindInputPair('agentCount', value => simulation.agents.setCount(value));
+controls.bindInputPair('agentSpeed', value => simulation.agents.setSpeed(value));
+controls.bindInputPair('agentInertia', value => simulation.agents.setSteeringStrength(value));
+controls.bindInputPair('agentSteeringExponent', value => simulation.agents.setSteeringExponent(value));
 
 const playback = new Playback();
 controls.bindPlayback(playback);
@@ -98,7 +56,7 @@ async function updateAgentDebug() {
 
 	readingState = true;
 	try {
-		const state = await agents.read0thAgentState(renderer);
+		const state = await simulation.agents.read0thAgentState(renderer);
 		const element = document.getElementById("agentState");
 		if (element) {
 			element.textContent = JSON.stringify(state, null, 2);
@@ -112,11 +70,11 @@ async function updateAgentDebug() {
 
 async function frameRequestCallback() {
 	// Resize camera and renderer according to current canvas size
-	viewport.resize(renderer, camera, simulationResolution);
+	viewport.resize(renderer, camera, simulation.resolution);
 
 	// Per-tick simulation
 	if (playback.shouldAdvance()) {
-		agents.compute(renderer);
+		simulation.update(renderer);
 	}
 
 	if (playback.paused) {

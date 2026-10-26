@@ -4,7 +4,7 @@ import { FullScreenQuad } from "three/examples/jsm/Addons.js";
 
 import { CoarseMap } from "../coarse-map/coarse-map";
 import { Destination } from "../destinations/destination";
-import type { SimulationResolution } from "../simulation-size";
+import type { SimulationResolution } from "../simulation";
 
 import computeFragmentShader from './compute/navigation-compute.frag?raw';
 import computeVertexShader from './compute/navigation-compute.vert?raw';

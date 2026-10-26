@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-import type { SimulationResolution } from "../simulation-size";
+import type { SimulationResolution } from "../simulation";
 
 export class Destination {
 	public downscaledPosition: THREE.Vector2;
