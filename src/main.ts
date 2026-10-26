@@ -4,7 +4,7 @@ import * as viewport from "./viewport";
 
 import { Playback } from "./playback";
 import { Destination } from "./simulation/destinations/destination";
-import { Simulation, SimulationResolution, type SimulationOptions } from "./simulation/simulation";
+import { Simulation, SimulationResolution } from "./simulation/simulation";
 
 const scene = new THREE.Scene();
 
@@ -22,16 +22,19 @@ const terrainTexture = await new THREE.TextureLoader().loadAsync("assets/5.png")
 terrainTexture.generateMipmaps = false;
 terrainTexture.colorSpace = THREE.SRGBColorSpace;
 
-const resolution = new SimulationResolution(terrainTexture.width, terrainTexture.height, 8);
-const simulationOptions: SimulationOptions = {
-	resolution,
-	destinations: [
-		new Destination(new THREE.Vector2(200, 270), 12, resolution),
-		new Destination(new THREE.Vector2(650, 264), 12, resolution),
-		new Destination(new THREE.Vector2(501, 500), 12, resolution),
-	],
-}
-const simulation = new Simulation(renderer, terrainTexture, simulationOptions);
+const resolution = new SimulationResolution(
+	terrainTexture.width,
+	terrainTexture.height,
+	8
+);
+
+const destinations = [
+	new Destination(new THREE.Vector2(200, 270), 12, resolution),
+	new Destination(new THREE.Vector2(650, 264), 12, resolution),
+	new Destination(new THREE.Vector2(501, 500), 12, resolution),
+];
+
+const simulation = new Simulation(renderer, terrainTexture, resolution, destinations);
 scene.add(simulation.group);
 
 controls.bindVisibilityToggle("showTerrain", simulation.terrainMesh);

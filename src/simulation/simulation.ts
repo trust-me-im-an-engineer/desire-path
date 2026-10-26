@@ -6,11 +6,6 @@ import type { Destination } from "./destinations/destination";
 import { Destinations } from "./destinations/destinations";
 import { NavigationMaps } from "./navigation-map/navigation-maps";
 
-export type SimulationOptions = {
-	resolution: SimulationResolution;
-	destinations: readonly Destination[];
-}
-
 export class SimulationResolution {
 	readonly native: THREE.Vector2;
 	readonly downscaled: THREE.Vector2;
@@ -29,28 +24,29 @@ export class SimulationResolution {
 }
 
 export class Simulation {
-	public readonly group = new THREE.Group();
 	public readonly resolution: SimulationResolution;
 	public readonly terrainMesh: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial>;
 	public readonly destinations: Destinations;
 	public readonly coarseMap: CoarseMap;
 	public readonly navigationMaps: NavigationMaps;
 	public readonly agents: Agents;
+	public readonly group = new THREE.Group();
 
 	constructor(
 		renderer: THREE.WebGLRenderer,
 		terrainTexture: THREE.Texture,
-		options: SimulationOptions,
+		resolution: SimulationResolution,
+		destinations: readonly Destination[],
 	) {
-		this.resolution = options.resolution;
-		const { native } = this.resolution;
+		this.resolution = resolution;
+
 		this.terrainMesh = new THREE.Mesh(
-			new THREE.PlaneGeometry(native.width, native.height),
+			new THREE.PlaneGeometry(resolution.native.width, resolution.native.height),
 			new THREE.MeshBasicMaterial({ map: terrainTexture }),
 		);
-		this.terrainMesh.position.set(native.width / 2, -native.height / 2);
+		this.terrainMesh.position.set(resolution.native.width / 2, -resolution.native.height / 2);
 
-		this.destinations = new Destinations([...options.destinations]);
+		this.destinations = new Destinations([...destinations]);
 
 		this.coarseMap = new CoarseMap(this.resolution, terrainTexture);
 		this.coarseMap.compute(renderer);
@@ -61,7 +57,6 @@ export class Simulation {
 			this.destinations.items,
 			renderer,
 		);
-		this.navigationMaps.mesh.visible = false;
 
 		this.agents = new Agents(
 			this.resolution,
