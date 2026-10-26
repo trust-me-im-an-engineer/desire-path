@@ -2,8 +2,7 @@ import * as THREE from "three";
 
 import { Agents } from "./agents/agents";
 import { CoarseMap } from "./coarse-map/coarse-map";
-import type { Destination } from "./destinations/destination";
-import { Destinations } from "./destinations/destinations";
+import type { Destinations } from "./destinations/destinations";
 import { NavigationMaps } from "./navigation-map/navigation-maps";
 import type { SimulationResolution } from "./resolution";
 
@@ -20,7 +19,7 @@ export class Simulation {
 		renderer: THREE.WebGLRenderer,
 		terrainTexture: THREE.Texture,
 		resolution: SimulationResolution,
-		destinations: readonly Destination[],
+		destinations: Destinations,
 	) {
 		this.resolution = resolution;
 
@@ -30,7 +29,7 @@ export class Simulation {
 		);
 		this.terrainMesh.position.set(resolution.native.width / 2, -resolution.native.height / 2);
 
-		this.destinations = new Destinations([...destinations]);
+		this.destinations = destinations;
 
 		this.coarseMap = new CoarseMap(this.resolution, terrainTexture);
 		this.coarseMap.compute(renderer);

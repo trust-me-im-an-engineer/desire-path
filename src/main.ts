@@ -4,6 +4,7 @@ import * as viewport from "./viewport";
 
 import { Playback } from "./playback";
 import { Destination } from "./simulation/destinations/destination";
+import { Destinations } from "./simulation/destinations/destinations";
 import { SimulationResolution } from "./simulation/resolution";
 import { Simulation } from "./simulation/simulation";
 
@@ -29,11 +30,11 @@ const resolution = new SimulationResolution(
 	8
 );
 
-const destinations = [
+const destinations = new Destinations([
 	new Destination(new THREE.Vector2(200, 270), 12, resolution),
 	new Destination(new THREE.Vector2(650, 264), 12, resolution),
 	new Destination(new THREE.Vector2(501, 500), 12, resolution),
-];
+]);
 
 const simulation = new Simulation(renderer, terrainTexture, resolution, destinations);
 scene.add(simulation.group);
