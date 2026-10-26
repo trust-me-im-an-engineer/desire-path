@@ -39,17 +39,16 @@ const destinations = new Destinations([
 const simulation = new Simulation(renderer, terrainTexture, resolution, destinations);
 scene.add(simulation.group);
 
-controls.bindVisibilityToggle("showTerrain", simulation.terrainMesh);
-controls.bindVisibilityToggle("showDestinations", simulation.destinations.group);
-controls.bindVisibilityToggle("showCoarseMap", simulation.coarseMap.mesh);
-controls.bindVisibilityToggle("showAgents", simulation.agents.mesh);
-
-controls.bindNavigationMapsDebug(simulation.navigationMaps);
-
 controls.bindInputPair('agentCount', value => simulation.agents.setCount(value));
 controls.bindInputPair('agentSpeed', value => simulation.agents.setSpeed(value));
 controls.bindInputPair('agentInertia', value => simulation.agents.setSteeringStrength(value));
 controls.bindInputPair('agentSteeringExponent', value => simulation.agents.setSteeringExponent(value));
+
+controls.bindVisibilityToggle("showTerrain", simulation.terrainMesh);
+controls.bindVisibilityToggle("showDestinations", simulation.destinations.group);
+controls.bindNavigationMapsDebug(simulation.navigationMaps);
+controls.bindVisibilityToggle("showCoarseMap", simulation.coarseMap.mesh);
+controls.bindVisibilityToggle("showAgents", simulation.agents.mesh);
 
 const playback = new Playback();
 controls.bindPlayback(playback);
