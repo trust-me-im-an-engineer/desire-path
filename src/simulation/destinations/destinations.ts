@@ -18,7 +18,7 @@ export class Destinations {
 				new THREE.CircleGeometry(destination.weight),
 				new THREE.MeshBasicMaterial({ color: 0x00ff00 })
 			);
-			destinationMesh.position.set(destination.nativePosition.x, -destination.nativePosition.y, 4);
+			destinationMesh.position.set(destination.nativePosition.x, -destination.nativePosition.y, 5);
 			this.group.add(destinationMesh);
 		}
 

@@ -24,7 +24,7 @@ camera.top = 0;
 camera.position.z = 100;
 camera.updateProjectionMatrix();
 
-const terrainTexture = await new THREE.TextureLoader().loadAsync("assets/5.png");
+const terrainTexture = await new THREE.TextureLoader().loadAsync("assets/2.png");
 terrainTexture.generateMipmaps = false;
 terrainTexture.colorSpace = THREE.SRGBColorSpace;
 
@@ -39,17 +39,14 @@ const terrainMesh = new THREE.Mesh(
 	new THREE.MeshBasicMaterial({ map: terrainTexture })
 );
 terrainMesh.position.set(simulationResolution.native.width / 2, -simulationResolution.native.height / 2);
-scene.add(terrainMesh);
 
 const destinations = new Destinations([
 	new Destination(new THREE.Vector2(200, 270), 12, simulationResolution),
 	new Destination(new THREE.Vector2(650, 264), 12, simulationResolution),
 	new Destination(new THREE.Vector2(501, 500), 12, simulationResolution),
 ]);
-scene.add(destinations.group);
 
 const coarseMap = new CoarseMap(simulationResolution, terrainTexture);
-scene.add(coarseMap.mesh);
 
 coarseMap.compute(renderer);
 
@@ -59,7 +56,6 @@ const navigationMaps = new NavigationMaps(
 	destinations.items,
 	renderer,
 );
-scene.add(navigationMaps.mesh);
 navigationMaps.mesh.visible = false;
 
 const agents = new Agents(
@@ -69,11 +65,18 @@ const agents = new Agents(
 	destinations,
 	navigationMaps.textureArray,
 	renderer,
-	5,
+	4,
 	(document.getElementById('agentSpeedNumber') as HTMLInputElement).valueAsNumber,
 	(document.getElementById('agentCountNumber') as HTMLInputElement).valueAsNumber,
 );
-scene.add(agents.mesh);
+
+scene.add(
+	terrainMesh,
+	coarseMap.mesh,
+	navigationMaps.mesh,
+	agents.mesh,
+	destinations.group,
+);
 
 controls.bindVisibilityToggle("showTerrain", terrainMesh);
 controls.bindVisibilityToggle("showDestinations", destinations.group);
