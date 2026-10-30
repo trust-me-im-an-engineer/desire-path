@@ -6,6 +6,7 @@ import { Playback } from "./playback";
 import { Destinations } from "./simulation/destinations/destinations";
 import { SimulationResolution } from "./simulation/resolution";
 import { Simulation } from "./simulation/simulation";
+import { presets, Terrain } from "./terrain/terrain";
 
 const scene = new THREE.Scene();
 
@@ -19,7 +20,9 @@ camera.top = 0;
 camera.position.z = 100;
 camera.updateProjectionMatrix();
 
-const terrainTexture = await new THREE.TextureLoader().loadAsync("assets/5.png");
+const terrain: Terrain = presets[1];
+
+const terrainTexture = await new THREE.TextureLoader().loadAsync("assets/" + terrain.url);
 terrainTexture.generateMipmaps = false;
 terrainTexture.colorSpace = THREE.SRGBColorSpace;
 
@@ -29,11 +32,7 @@ const resolution = new SimulationResolution(
 	8
 );
 
-const destinations = new Destinations([
-	{ x: 200, y: 270, weight: 12 },
-	{ x: 650, y: 264, weight: 12 },
-	{ x: 501, y: 500, weight: 12 },
-]);
+const destinations = new Destinations(terrain.destinations);
 
 const simulation = new Simulation(renderer, terrainTexture, resolution, destinations);
 scene.add(simulation.group);
