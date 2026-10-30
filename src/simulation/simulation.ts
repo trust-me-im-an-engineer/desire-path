@@ -1,10 +1,11 @@
 import * as THREE from "three";
 
+import { Destination } from "../terrain/terrain";
 import { Agents } from "./agents/agents";
 import { CoarseMap } from "./coarse-map/coarse-map";
-import type { Destinations } from "./destinations/destinations";
+import { Destinations } from "./destinations/destinations";
 import { NavigationMaps } from "./navigation-map/navigation-maps";
-import type { SimulationResolution } from "./resolution";
+import { SimulationResolution } from "./resolution";
 
 export class Simulation {
 	public readonly resolution: SimulationResolution;
@@ -18,18 +19,25 @@ export class Simulation {
 	constructor(
 		renderer: THREE.WebGLRenderer,
 		terrainTexture: THREE.Texture,
-		resolution: SimulationResolution,
-		destinations: Destinations,
+		destinations: Destination[],
+		downscaleFactor: number,
 	) {
-		this.resolution = resolution;
+		this.resolution = new SimulationResolution(
+			terrainTexture.width,
+			terrainTexture.height,
+			downscaleFactor,
+		);
 
 		this.terrainMesh = new THREE.Mesh(
-			new THREE.PlaneGeometry(resolution.native.width, resolution.native.height),
+			new THREE.PlaneGeometry(this.resolution.native.width, this.resolution.native.height),
 			new THREE.MeshBasicMaterial({ map: terrainTexture }),
 		);
-		this.terrainMesh.position.set(resolution.native.width / 2, -resolution.native.height / 2);
+		this.terrainMesh.position.set(
+			this.resolution.native.width / 2,
+			-this.resolution.native.height / 2
+		);
 
-		this.destinations = destinations;
+		this.destinations = new Destinations(destinations);
 
 		this.coarseMap = new CoarseMap(this.resolution, terrainTexture);
 		this.coarseMap.compute(renderer);

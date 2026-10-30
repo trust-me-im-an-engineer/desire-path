@@ -3,8 +3,6 @@ import * as controls from "./controls";
 import * as viewport from "./viewport";
 
 import { Playback } from "./playback";
-import { Destinations } from "./simulation/destinations/destinations";
-import { SimulationResolution } from "./simulation/resolution";
 import { Simulation } from "./simulation/simulation";
 import { presets, Terrain } from "./terrain/terrain";
 
@@ -20,21 +18,13 @@ camera.top = 0;
 camera.position.z = 100;
 camera.updateProjectionMatrix();
 
-const terrain: Terrain = presets[1];
+const terrain: Terrain = presets[0];
 
 const terrainTexture = await new THREE.TextureLoader().loadAsync("assets/" + terrain.url);
 terrainTexture.generateMipmaps = false;
 terrainTexture.colorSpace = THREE.SRGBColorSpace;
 
-const resolution = new SimulationResolution(
-	terrainTexture.width,
-	terrainTexture.height,
-	8
-);
-
-const destinations = new Destinations(terrain.destinations);
-
-const simulation = new Simulation(renderer, terrainTexture, resolution, destinations);
+const simulation = new Simulation(renderer, terrainTexture, terrain.destinations, 8);
 scene.add(simulation.group);
 
 controls.bindInputPair('agentCount', value => simulation.agents.setCount(value));
