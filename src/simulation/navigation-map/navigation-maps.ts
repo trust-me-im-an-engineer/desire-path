@@ -39,8 +39,15 @@ export class NavigationMaps {
 		const coarseMapArray = coarseMap.toArray(renderer);
 		const data = new Float32Array(mapSize * destinations.length);
 		for (const [i, destination] of destinations.entries()) {
+			const destinationDownscaledPosition = new THREE.Vector2(
+				Math.floor(destination.x / simulationResolution.downscaleFactor),
+				simulationResolution.downscaled.height
+				- 1
+				- Math.floor(destination.y / simulationResolution.downscaleFactor),
+			);
+
 			const navigationMap = dijkstra(
-				destination.downscaledPosition,
+				destinationDownscaledPosition,
 				coarseMapArray,
 				simulationResolution,
 			);

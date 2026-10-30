@@ -3,7 +3,6 @@ import * as controls from "./controls";
 import * as viewport from "./viewport";
 
 import { Playback } from "./playback";
-import { Destination } from "./simulation/destinations/destination";
 import { Destinations } from "./simulation/destinations/destinations";
 import { SimulationResolution } from "./simulation/resolution";
 import { Simulation } from "./simulation/simulation";
@@ -31,9 +30,9 @@ const resolution = new SimulationResolution(
 );
 
 const destinations = new Destinations([
-	new Destination(new THREE.Vector2(200, 270), 12, resolution),
-	new Destination(new THREE.Vector2(650, 264), 12, resolution),
-	new Destination(new THREE.Vector2(501, 500), 12, resolution),
+	{ x: 200, y: 270, weight: 12 },
+	{ x: 650, y: 264, weight: 12 },
+	{ x: 501, y: 500, weight: 12 },
 ]);
 
 const simulation = new Simulation(renderer, terrainTexture, resolution, destinations);

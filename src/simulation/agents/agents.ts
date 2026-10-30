@@ -75,8 +75,8 @@ export class Agents {
 			}
 			const destinationIndex = weightedDestinationIndices[weightedIndex];
 
-			stateTextureData[i] = destinations.items[destinationIndex].nativePosition.x;
-			stateTextureData[i + 1] = destinations.items[destinationIndex].nativePosition.y;
+			stateTextureData[i] = destinations.items[destinationIndex].x;
+			stateTextureData[i + 1] = destinations.items[destinationIndex].y;
 			stateTextureData[i + 2] = 0.0;
 			stateTextureData[i + 3] = destinationIndex;
 		}

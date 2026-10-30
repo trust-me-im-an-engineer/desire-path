@@ -18,7 +18,7 @@ export class Destinations {
 				new THREE.CircleGeometry(destination.weight),
 				new THREE.MeshBasicMaterial({ color: 0x00ff00 })
 			);
-			destinationMesh.position.set(destination.nativePosition.x, -destination.nativePosition.y, 5);
+			destinationMesh.position.set(destination.x, -destination.y, 5);
 			this.group.add(destinationMesh);
 		}
 
@@ -26,8 +26,8 @@ export class Destinations {
 
 		const data = new Float32Array(3 * MAX_COUNT);
 		for (let i = 0; i < items.length; i++) {
-			data[3 * i] = items[i].nativePosition.x;
-			data[3 * i + 1] = items[i].nativePosition.y;
+			data[3 * i] = items[i].x;
+			data[3 * i + 1] = items[i].y;
 			data[3 * i + 2] = items[i].weight;
 
 			this.totalWeight += items[i].weight;
