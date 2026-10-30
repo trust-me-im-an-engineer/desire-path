@@ -18,7 +18,7 @@ camera.top = 0;
 camera.position.z = 100;
 camera.updateProjectionMatrix();
 
-const terrain: Terrain = presets[0];
+const terrain: Terrain = presets["5"];
 
 const terrainTexture = await new THREE.TextureLoader().loadAsync("assets/" + terrain.url);
 terrainTexture.generateMipmaps = false;

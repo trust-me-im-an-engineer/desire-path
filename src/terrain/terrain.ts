@@ -5,14 +5,12 @@ export type Destination = {
 }
 
 export type Terrain = {
-	name: string;
 	url: string;
 	destinations: Destination[];
 }
 
-export const presets: Terrain[] = [
-	{
-		name: "2",
+export const presets: Record<string, Terrain> = {
+	"2": {
 		url: "2.png",
 		destinations: [
 			{ x: 200, y: 270, weight: 12 },
@@ -20,8 +18,7 @@ export const presets: Terrain[] = [
 			{ x: 501, y: 500, weight: 12 },
 		],
 	},
-	{
-		name: "5",
+	"5": {
 		url: "5.png",
 		destinations: [
 			{ x: 300, y: 270, weight: 12 },
@@ -29,4 +26,4 @@ export const presets: Terrain[] = [
 			{ x: 501, y: 700, weight: 12 },
 		],
 	}
-]
+}
