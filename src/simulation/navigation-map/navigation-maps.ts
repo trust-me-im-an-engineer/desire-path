@@ -15,7 +15,7 @@ export const UNREACHABLE = 1e30;
 
 export class NavigationMaps {
 	public readonly textureArray: THREE.DataArrayTexture;
-	public readonly mesh: THREE.Mesh;
+	public readonly mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.RawShaderMaterial>;
 
 	private readonly computeMaterial: THREE.RawShaderMaterial;
 	private readonly computePass: FullScreenQuad;

@@ -14,7 +14,7 @@ const AGENT_LENGTH = 15;
 const AGENT_WIDTH = 10;
 
 export class Agents {
-	public readonly mesh: THREE.Mesh<THREE.InstancedBufferGeometry>;
+	public readonly mesh: THREE.Mesh<THREE.InstancedBufferGeometry, THREE.RawShaderMaterial>;
 
 	private computeTargetRead: THREE.WebGLRenderTarget;
 	private computeTargetWrite: THREE.WebGLRenderTarget;
