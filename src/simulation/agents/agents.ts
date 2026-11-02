@@ -134,7 +134,7 @@ export class Agents {
 				uDestinationsTotalWeight: { value: destinations.totalWeight },
 
 				uSimulationResolution: { value: simulationResolution.native },
-				uDownscaleFactor: { value: simulationResolution.downscaleFactor },
+				uDownscaleFactor: { value: simulationResolution.cellSize },
 				uTerrainTexture: { value: terrainTexture },
 				uNavigationMapTextureArray: { value: navigationMapTextureArray },
 				uSteeringStrength: { value: 0 },

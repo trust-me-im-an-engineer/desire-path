@@ -13,7 +13,7 @@ uniform ivec2 uSimulationResolution;
 uniform sampler2D uTerrainTexture;
 uniform highp sampler2DArray uNavigationMapTextureArray;
 
-uniform float uDownscaleFactor;
+uniform vec2 uDownscaleFactor;
 uniform float uAgentSpeed;
 uniform float uSteeringStrength;
 uniform float uSteeringExponent;
@@ -115,7 +115,7 @@ bool isDestinationReached(State state, Destination destination, float speed) {
 	}
 
 	vec2 closestVec = toDestination - closestFraction * stepVec;
-	return dot(closestVec, closestVec) <= destination.weight * destination.weight;
+	return dot(closestVec, closestVec) <= uDownscaleFactor.x * uDownscaleFactor.y / 2.0f;
 }
 
 // chooseNextDestination chooses a new destination randomly according to weights.
@@ -151,7 +151,7 @@ float getNavigationWeight(ivec2 cell, int layer) {
 		return UNREACHABLE;
 	}
 
-	return texelFetch(uNavigationMapTextureArray, ivec3(cell, layer), 0).r / uDownscaleFactor;
+	return texelFetch(uNavigationMapTextureArray, ivec3(cell, layer), 0).r / ((uDownscaleFactor.x + uDownscaleFactor.y) / 2.0f);
 }
 
 // angleDiff returns [0, 1] where 0 is same direction, and 1 opposite.

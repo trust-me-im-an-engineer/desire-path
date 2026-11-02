@@ -2,10 +2,10 @@ import { Heap } from "heap-js";
 import * as THREE from "three";
 import { FullScreenQuad } from "three/examples/jsm/Addons.js";
 
-import { Destination } from "../../terrain/destination";
 import { CoarseMap } from "../coarse-map/coarse-map";
 import type { SimulationResolution } from "../resolution";
 
+import { Destination } from "../../terrain/terrain";
 import computeFragmentShader from './compute/navigation-compute.frag?raw';
 import computeVertexShader from './compute/navigation-compute.vert?raw';
 import renderFragmentShader from './render/navigation-render.frag?raw';
@@ -40,10 +40,10 @@ export class NavigationMaps {
 		const data = new Float32Array(mapSize * destinations.length);
 		for (const [i, destination] of destinations.entries()) {
 			const destinationDownscaledPosition = new THREE.Vector2(
-				Math.floor(destination.x / simulationResolution.downscaleFactor),
+				Math.floor(destination.x / simulationResolution.cellSize.x),
 				simulationResolution.downscaled.height
 				- 1
-				- Math.floor(destination.y / simulationResolution.downscaleFactor),
+				- Math.floor(destination.y / simulationResolution.cellSize.y),
 			);
 
 			const navigationMap = dijkstra(
@@ -222,18 +222,20 @@ function dijkstra(destination: THREE.Vector2, map: Float32Array, simulationResol
 					continue;
 				}
 
-				let distance = simulationResolution.downscaleFactor;
+				let distance = (simulationResolution.cellSize.x);
 				if (offsetX !== 0 && offsetY !== 0) {
 					distance *= Math.SQRT2;
 				}
 
 				const edgeCost = distance * ((1 / currentWeight + 1 / nextWeight));
 
-				const candidate = Math.min(UNREACHABLE, current.cost + edgeCost);
+				const candidate = Math.fround(
+					Math.min(UNREACHABLE, current.cost + edgeCost)
+				);
 
 				if (candidate < navigationMap[nextIndex]) {
 					navigationMap[nextIndex] = candidate;
-					queue.push({ index: nextIndex, cost: navigationMap[nextIndex] });
+					queue.push({ index: nextIndex, cost: candidate });
 				}
 			}
 		}

@@ -20,12 +20,12 @@ export class Simulation {
 		renderer: THREE.WebGLRenderer,
 		terrainTexture: THREE.Texture,
 		destinations: Destination[],
-		downscaleFactor: number,
+		targetCellSize: number,
 	) {
 		this.resolution = new SimulationResolution(
 			terrainTexture.width,
 			terrainTexture.height,
-			downscaleFactor,
+			targetCellSize,
 		);
 
 		this.terrainMesh = new THREE.Mesh(
@@ -37,7 +37,7 @@ export class Simulation {
 			-this.resolution.native.height / 2
 		);
 
-		this.destinations = new Destinations(destinations);
+		this.destinations = new Destinations(destinations, this.resolution.cellSize);
 
 		this.coarseMap = new CoarseMap(this.resolution, terrainTexture);
 		this.coarseMap.compute(renderer);

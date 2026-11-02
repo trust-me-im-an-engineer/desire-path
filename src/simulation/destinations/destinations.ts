@@ -10,6 +10,7 @@ export class Destinations {
 
 	constructor(
 		public items: Destination[],
+		cellSize: THREE.Vector2,
 	) {
 		this.group = new THREE.Group();
 		for (const destination of items) {
@@ -17,7 +18,11 @@ export class Destinations {
 				new THREE.CircleGeometry(destination.weight),
 				new THREE.MeshBasicMaterial({ color: 0x00ff00 })
 			);
-			destinationMesh.position.set(destination.x, -destination.y, 5);
+			destinationMesh.position.set(
+				destination.x - destination.x % cellSize.x + cellSize.x / 2,
+				-(destination.y - destination.y % cellSize.y + cellSize.y / 2),
+				5
+			);
 			this.group.add(destinationMesh);
 		}
 
@@ -25,8 +30,8 @@ export class Destinations {
 
 		const data = new Float32Array(3 * MAX_COUNT);
 		for (let i = 0; i < items.length; i++) {
-			data[3 * i] = items[i].x;
-			data[3 * i + 1] = items[i].y;
+			data[3 * i] = items[i].x - items[i].x % cellSize.x + cellSize.x / 2;
+			data[3 * i + 1] = items[i].y - items[i].y % cellSize.y + cellSize.y / 2;
 			data[3 * i + 2] = items[i].weight;
 
 			this.totalWeight += items[i].weight;

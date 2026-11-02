@@ -19,11 +19,9 @@ export class CoarseMap {
 		const coarseMapShaderMaterial = new THREE.RawShaderMaterial({
 			glslVersion: THREE.GLSL3,
 
-			defines: {
-				DOWNSCALE_FACTOR: simulationResolution.downscaleFactor,
-			},
 			uniforms: {
 				uTerrainTexture: { value: terrainTexture },
+				uCellSize: { value: simulationResolution.cellSize }
 				// uWearMap: { value: wearTexture },
 				// uDestinations: { value: destinations },
 			},
