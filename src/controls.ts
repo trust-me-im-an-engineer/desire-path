@@ -1,5 +1,5 @@
-import * as THREE from "three";
 
+import type { Object3D } from "three";
 import type { Playback } from "./playback";
 import { NavigationMaps } from "./simulation/navigation-map/navigation-maps";
 
@@ -57,16 +57,18 @@ export function bindInputPair(idPrefix: string, onInput?: (value: number) => voi
 	updateValue();
 }
 
-export function bindVisibilityToggle(id: string, object: THREE.Object3D): void {
+export function bindVisibilityToggle(id: string, getObject: () => Object3D): () => void {
 	const toggle = document.getElementById(id);
 	if (!(toggle instanceof HTMLInputElement)) {
 		throw new Error(`Visibility toggle #${id} not found`);
 	}
 
-	object.visible = toggle.checked;
-	toggle.addEventListener("change", () => {
-		object.visible = toggle.checked;
-	});
+	const updateValue = (): void => {
+		getObject().visible = toggle.checked;
+	};
+	toggle.addEventListener("change", updateValue);
+	updateValue();
+	return updateValue;
 }
 
 export function bindNavigationMapsDebug(navigationMaps: NavigationMaps) {

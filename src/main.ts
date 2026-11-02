@@ -18,13 +18,31 @@ camera.top = 0;
 camera.position.z = 100;
 camera.updateProjectionMatrix();
 
-const terrain: Terrain = presets["a"];
+let simulation: Simulation;
 
-const terrainTexture = await new THREE.TextureLoader().loadAsync("assets/" + terrain.url);
-terrainTexture.generateMipmaps = false;
-terrainTexture.colorSpace = THREE.SRGBColorSpace;
+const loadPreset = async function (name: string): Promise<Simulation> {
+	const terrain: Terrain = presets[name];
 
-const simulation = new Simulation(renderer, terrainTexture, terrain.destinations, 8);
+	const terrainTexture = await new THREE.TextureLoader().loadAsync("assets/" + terrain.url);
+	terrainTexture.generateMipmaps = false;
+	terrainTexture.colorSpace = THREE.SRGBColorSpace;
+
+	return new Simulation(renderer, terrainTexture, terrain.destinations, 8);
+}
+
+const selectPreset = document.getElementById("select-preset") as HTMLSelectElement;
+selectPreset.addEventListener('change', async () => {
+	console.log(selectPreset.value);
+	const next = await loadPreset(selectPreset.value);
+	scene.remove(simulation.group);
+	scene.add(next.group);
+	simulation = next;
+
+	visibilityBindings.forEach(setVisibility => setVisibility());
+	controls.bindNavigationMapsDebug(simulation.navigationMaps);
+});
+
+simulation = await loadPreset(selectPreset.value);
 scene.add(simulation.group);
 
 controls.bindInputPair('agentCount', value => simulation.agents.setCount(value));
@@ -32,11 +50,13 @@ controls.bindInputPair('agentSpeed', value => simulation.agents.setSpeed(value))
 controls.bindInputPair('agentInertia', value => simulation.agents.setSteeringStrength(value));
 controls.bindInputPair('agentSteeringExponent', value => simulation.agents.setSteeringExponent(value));
 
-controls.bindVisibilityToggle("showTerrain", simulation.terrainMesh);
-controls.bindVisibilityToggle("showDestinations", simulation.destinations.group);
+const visibilityBindings = [
+	controls.bindVisibilityToggle("showTerrain", () => simulation.terrainMesh),
+	controls.bindVisibilityToggle("showDestinations", () => simulation.destinations.group),
+	controls.bindVisibilityToggle("showCoarseMap", () => simulation.coarseMap.mesh),
+	controls.bindVisibilityToggle("showAgents", () => simulation.agents.mesh),
+];
 controls.bindNavigationMapsDebug(simulation.navigationMaps);
-controls.bindVisibilityToggle("showCoarseMap", simulation.coarseMap.mesh);
-controls.bindVisibilityToggle("showAgents", simulation.agents.mesh);
 
 const playback = new Playback();
 controls.bindPlayback(playback);
