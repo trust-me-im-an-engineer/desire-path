@@ -1,6 +1,5 @@
 import * as THREE from "three";
-
-import { Destination } from "../../terrain/destination";
+import { Destination } from "../../terrain/terrain";
 
 export const MAX_COUNT = 32;
 
