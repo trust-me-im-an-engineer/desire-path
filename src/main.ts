@@ -19,11 +19,12 @@ camera.position.z = 100;
 camera.updateProjectionMatrix();
 
 let simulation: Simulation;
+let terrainTexture: THREE.Texture;
 
 const loadPreset = async function (name: string): Promise<Simulation> {
 	const terrain: Terrain = presets[name];
 
-	const terrainTexture = await new THREE.TextureLoader().loadAsync("assets/" + terrain.url);
+	terrainTexture = await new THREE.TextureLoader().loadAsync("assets/" + terrain.url);
 	terrainTexture.generateMipmaps = false;
 	terrainTexture.colorSpace = THREE.SRGBColorSpace;
 
@@ -32,11 +33,17 @@ const loadPreset = async function (name: string): Promise<Simulation> {
 
 const selectPreset = document.getElementById("select-preset") as HTMLSelectElement;
 selectPreset.addEventListener('change', async () => {
-	console.log(selectPreset.value);
 	const next = await loadPreset(selectPreset.value);
 	scene.remove(simulation.group);
 	scene.add(next.group);
+
+	const oldSimulation = simulation;
+	const oldTerrainTexture = terrainTexture;
+
 	simulation = next;
+
+	oldTerrainTexture.dispose();
+	oldSimulation.dispose();
 
 	visibilityBindings.forEach(setVisibility => setVisibility());
 	controls.bindNavigationMapsDebug(simulation.navigationMaps);

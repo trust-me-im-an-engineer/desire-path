@@ -155,6 +155,15 @@ export class NavigationMaps {
 		this.renderMaterial.uniforms.uDestinationIndex.value = index;
 		this.renderMaterial.uniforms.uMaxReachableWeight.value = this.maxReachableWeight[index]
 	}
+
+	dispose(): void {
+		this.textureArray.dispose();
+		this.mesh.geometry.dispose();
+		this.computeMaterial.dispose();
+		this.navigationRead.dispose();
+		this.navigationWrite.dispose();
+		this.renderMaterial.dispose();
+	}
 }
 
 type HeapEntry = {

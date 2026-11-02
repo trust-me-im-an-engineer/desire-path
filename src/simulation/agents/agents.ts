@@ -15,13 +15,14 @@ const AGENT_WIDTH = 10;
 
 export class Agents {
 	public readonly mesh: THREE.Mesh<THREE.InstancedBufferGeometry>;
-	public count = 1000;
 
 	private computeTargetRead: THREE.WebGLRenderTarget;
 	private computeTargetWrite: THREE.WebGLRenderTarget;
+	private readonly propertiesDataTexture: THREE.DataTexture;
 	private readonly computeMaterial: THREE.RawShaderMaterial;
 	private readonly pass: FullScreenQuad;
 	private readonly renderMaterial: THREE.RawShaderMaterial;
+	private count = 1000;
 
 	constructor(
 		simulationResolution: SimulationResolution,
@@ -33,23 +34,23 @@ export class Agents {
 		depth: number,
 	) {
 		// Initialize static properties texture (seed + per-agent speed multiplier).
-		const propertiesTextureData = new Float32Array(2 * TEXTURES_WIDTH ** 2);
-		for (let i = 0; i < propertiesTextureData.length; i += 2) {
-			propertiesTextureData[i] = Math.random();
-			propertiesTextureData[i + 1] = 0.5 + Math.random();
+		const propertiesArray = new Float32Array(2 * TEXTURES_WIDTH ** 2);
+		for (let i = 0; i < propertiesArray.length; i += 2) {
+			propertiesArray[i] = Math.random();
+			propertiesArray[i + 1] = 0.5 + Math.random();
 		}
-		const propertiesTexture = new THREE.DataTexture(
-			propertiesTextureData,
+		this.propertiesDataTexture = new THREE.DataTexture(
+			propertiesArray,
 			TEXTURES_WIDTH,
 			TEXTURES_WIDTH,
 			THREE.RGFormat,
 			THREE.FloatType,
 		);
-		propertiesTexture.minFilter = THREE.NearestFilter;
-		propertiesTexture.magFilter = THREE.NearestFilter;
-		propertiesTexture.generateMipmaps = false;
-		propertiesTexture.colorSpace = THREE.NoColorSpace;
-		propertiesTexture.needsUpdate = true;
+		this.propertiesDataTexture.minFilter = THREE.NearestFilter;
+		this.propertiesDataTexture.magFilter = THREE.NearestFilter;
+		this.propertiesDataTexture.generateMipmaps = false;
+		this.propertiesDataTexture.colorSpace = THREE.NoColorSpace;
+		this.propertiesDataTexture.needsUpdate = true;
 
 		// Choose each starting destination in proportion to its weight.
 		const weightedDestinationIndices: number[] = [];
@@ -127,7 +128,7 @@ export class Agents {
 
 			uniforms: {
 				uPreviousStateTexture: { value: this.computeTargetRead.texture },
-				uPropertiesTexture: { value: propertiesTexture },
+				uPropertiesTexture: { value: this.propertiesDataTexture },
 				uAgentSpeed: { value: 2 },
 
 				uDestinationsTexture: { value: destinations.texture },
@@ -223,5 +224,15 @@ export class Agents {
 
 		this.renderMaterial.uniforms.uStateTexture.value =
 			this.computeTargetRead.texture;
+	}
+
+	dispose(): void {
+		this.computeTargetRead.dispose();
+		this.computeTargetWrite.dispose();
+
+		this.propertiesDataTexture.dispose();
+		this.computeMaterial.dispose();
+		this.renderMaterial.dispose();
+		this.mesh.geometry.dispose();
 	}
 }

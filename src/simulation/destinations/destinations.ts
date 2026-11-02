@@ -50,4 +50,17 @@ export class Destinations {
 		this.texture.colorSpace = THREE.NoColorSpace;
 		this.texture.needsUpdate = true;
 	}
+
+	dispose(): void {
+		this.texture.dispose();
+
+		for (const child of this.group.children) {
+			if (child instanceof THREE.Mesh) {
+				child.geometry.dispose();
+				child.material.dispose();
+			}
+		}
+
+		this.group.clear();
+	}
 }

@@ -71,4 +71,18 @@ export class Simulation {
 	update(renderer: THREE.WebGLRenderer): void {
 		this.agents.compute(renderer);
 	}
+
+	dispose(): void {
+		this.group.removeFromParent();
+
+		this.agents.dispose();
+		this.navigationMaps.dispose();
+		this.coarseMap.dispose();
+		this.destinations.dispose();
+
+		this.terrainMesh.geometry.dispose();
+		this.terrainMesh.material.dispose();
+
+		this.group.clear();
+	}
 }

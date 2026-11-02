@@ -7,7 +7,7 @@ import fragmentShader from './coarse-map.frag?raw';
 import vertexShader from './coarse-map.vert?raw';
 
 export class CoarseMap {
-	public readonly mesh: THREE.Mesh;
+	public readonly mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial>;
 	public readonly computeTarget: THREE.WebGLRenderTarget;
 
 	private readonly pass: FullScreenQuad;
@@ -80,5 +80,12 @@ export class CoarseMap {
 			array,
 		);
 		return array;
+	}
+
+	dispose(): void {
+		this.mesh.geometry.dispose();
+		this.mesh.material.dispose();
+		this.computeTarget.dispose();
+		this.pass.material.dispose();
 	}
 }
