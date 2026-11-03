@@ -1,99 +1,204 @@
-
-import type { Object3D } from "three";
-import type { Playback } from "./playback";
+import { Playback } from "./playback";
 import { NavigationMaps } from "./simulation/navigation-map/navigation-maps";
+import { Simulation } from "./simulation/simulation";
 
-export function bindPlayback(playback: Playback): void {
-	const toggle = document.getElementById("toggleSimulation");
-	const step = document.getElementById("stepSimulation");
-	if (!(toggle instanceof HTMLButtonElement) || !(step instanceof HTMLButtonElement)) {
-		throw new Error("Simulation playback controls not found");
-	}
-
-	const updateControls = (): void => {
-		toggle.textContent = playback.paused ? "Продолжить" : "Пауза";
-		step.disabled = !playback.paused;
-	};
-
-	toggle.addEventListener("click", () => {
-		if (playback.paused) {
-			playback.resume();
-		} else {
-			playback.pause();
-		}
-		updateControls();
-	});
-
-	step.addEventListener("click", () => playback.step());
-	updateControls();
+interface Applyable {
+    apply(): void;
 }
 
-export function bindInputPair(idPrefix: string, onInput?: (value: number) => void) {
-	const range = document.getElementById(idPrefix + 'Range') as HTMLInputElement;
-	const number = document.getElementById(idPrefix + 'Number') as HTMLInputElement;
+export class Controls {
+    public simulation: Simulation;
 
-	const updateValue = (): void => {
-		if (number.validity.valid && Number.isFinite(number.valueAsNumber)) {
-			onInput?.(number.valueAsNumber);
-		}
-	};
+    private inputs: Array<Applyable>;
 
-	range.addEventListener('input', () => {
-		number.value = range.value;
-		updateValue();
-	});
+    constructor(simulation: Simulation) {
+        this.simulation = simulation;
 
-	number.addEventListener('input', () => {
-		range.value = number.value;
-		updateValue();
-	});
+        this.inputs = [
+            new InputPair("agentCount", (val) =>
+                this.simulation.agents.setCount(val),
+            ),
+            new InputPair("agentSpeed", (val) =>
+                this.simulation.agents.setSpeed(val),
+            ),
+            new InputPair("agentInertia", (val) =>
+                this.simulation.agents.setSteeringStrength(val),
+            ),
+            new InputPair("agentSteeringExponent", (val) =>
+                this.simulation.agents.setSteeringExponent(val),
+            ),
 
-	number.addEventListener('keydown', (event) => {
-		if (event.key === 'Enter') {
-			number.blur();
-		}
-	});
+            new VisibilityToggle("showTerrain", (checked) => {
+                this.simulation.terrainMesh.visible = checked;
+            }),
+            new VisibilityToggle("showDestinations", (checked) => {
+                this.simulation.destinations.group.visible = checked;
+            }),
+            new VisibilityToggle("showCoarseMap", (checked) => {
+                this.simulation.coarseMap.mesh.visible = checked;
+            }),
+            new VisibilityToggle("showAgents", (checked) => {
+                this.simulation.agents.mesh.visible = checked;
+            }),
 
-	updateValue();
+            new NavigationMapInput(() => {
+                return this.simulation.navigationMaps;
+            }),
+
+            new PlaybackInput(() => {
+                return this.simulation.playback;
+            }),
+        ];
+
+        this.apply();
+    }
+
+    public apply(): void {
+        for (const input of this.inputs) {
+            input.apply();
+        }
+    }
 }
 
-export function bindVisibilityToggle(id: string, getObject: () => Object3D): () => void {
-	const toggle = document.getElementById(id);
-	if (!(toggle instanceof HTMLInputElement)) {
-		throw new Error(`Visibility toggle #${id} not found`);
-	}
+type onInputPair = (value: number) => void;
 
-	const updateValue = (): void => {
-		getObject().visible = toggle.checked;
-	};
-	toggle.addEventListener("change", updateValue);
-	updateValue();
-	return updateValue;
+class InputPair {
+    private range: HTMLInputElement;
+    private number: HTMLInputElement;
+    private set: onInputPair;
+
+    constructor(idPrefix: string, f: onInputPair) {
+        this.range = document.getElementById(
+            idPrefix + "Range",
+        ) as HTMLInputElement;
+
+        this.number = document.getElementById(
+            idPrefix + "Number",
+        ) as HTMLInputElement;
+
+        this.set = f;
+
+        this.range.addEventListener("input", () => {
+            this.number.value = this.range.value;
+            this.set(this.number.valueAsNumber);
+        });
+
+        this.number.addEventListener("input", () => {
+            this.range.value = this.number.value;
+            this.set(this.number.valueAsNumber);
+        });
+
+        this.number.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+                this.number.blur();
+            }
+        });
+    }
+
+    public apply(): void {
+        this.range.value = this.number.value;
+        this.set(this.number.valueAsNumber);
+    }
 }
 
-export function bindNavigationMapsDebug(navigationMaps: NavigationMaps) {
-	const hideNavigationMapButton = document.getElementById("hideNavigationMap");
-	if (hideNavigationMapButton instanceof HTMLInputElement) {
-		navigationMaps.mesh.visible = !hideNavigationMapButton.checked;
-	}
+type onVisibilityToggle = (checked: boolean) => void;
 
-	const selectedNavigationMapButton = document.querySelector('input[name="navigationMap"]:checked');
-	if (selectedNavigationMapButton instanceof HTMLInputElement && selectedNavigationMapButton.value !== "none") {
-		navigationMaps.setDisplayedDestination(parseInt(selectedNavigationMapButton.value));
-	}
+class VisibilityToggle {
+    private toggle: HTMLInputElement;
+    private set: onVisibilityToggle;
 
-	const navigationMapButtons = document.querySelectorAll('input[name="navigationMap"]');
-	navigationMapButtons.forEach(button => {
-		button.addEventListener("change", (event) => {
-			const target = event.target as HTMLInputElement;
-			if (target.checked) {
-				if (target.value === "none") {
-					navigationMaps.mesh.visible = false;
-				} else {
-					navigationMaps.mesh.visible = true;
-					navigationMaps.setDisplayedDestination(parseInt(target.value));
-				}
-			}
-		});
-	});
+    constructor(id: string, f: onVisibilityToggle) {
+        this.toggle = document.getElementById(id) as HTMLInputElement;
+        this.set = f;
+
+        this.toggle.addEventListener("change", () => {
+            this.apply();
+        });
+    }
+
+    public apply(): void {
+        this.set(this.toggle.checked);
+    }
+}
+
+class NavigationMapInput {
+    private fieldSet: HTMLFieldSetElement;
+    private getter: () => NavigationMaps;
+
+    constructor(getNavigationMaps: () => NavigationMaps) {
+        this.fieldSet = document.getElementById(
+            "navigation-maps",
+        ) as HTMLFieldSetElement;
+
+        this.getter = getNavigationMaps;
+
+        this.fieldSet.addEventListener("change", (event) => {
+            const target = event.target;
+
+            if (!(target instanceof HTMLInputElement)) {
+                return;
+            }
+
+            this.set(target);
+        });
+    }
+
+    apply() {
+        const selected = document.querySelector(
+            'input[name="navigationMap"]:checked',
+        ) as HTMLInputElement;
+
+        this.set(selected);
+    }
+
+    private set(target: HTMLInputElement) {
+        const navigationMaps = this.getter();
+
+        if (target.value === "hide") {
+            navigationMaps.mesh.visible = false;
+        } else {
+            navigationMaps.mesh.visible = true;
+            navigationMaps.setDisplayedDestination(Number(target.value));
+        }
+    }
+}
+
+class PlaybackInput {
+    private toggle: HTMLButtonElement;
+    private step: HTMLButtonElement;
+    private get: () => Playback;
+
+    constructor(f: () => Playback) {
+        this.toggle = document.getElementById(
+            "playback-toggle",
+        ) as HTMLButtonElement;
+
+        this.step = document.getElementById(
+            "playback-step",
+        ) as HTMLButtonElement;
+
+        this.get = f;
+
+        this.toggle.addEventListener("click", () => {
+            const playback = this.get();
+            if (playback.paused) {
+                playback.resume();
+                this.toggle.textContent = "Пауза";
+                this.step.disabled = true;
+            } else {
+                playback.pause();
+                this.toggle.textContent = "Продолжить";
+                this.step.disabled = false;
+            }
+        });
+
+        this.step.addEventListener("click", () => {
+            this.get().step();
+        });
+    }
+
+    apply() {
+        this.step.disabled = true;
+        this.toggle.textContent = "Пауза";
+    }
 }

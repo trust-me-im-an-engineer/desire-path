@@ -22,7 +22,6 @@ export class Agents {
 	private readonly computeMaterial: THREE.RawShaderMaterial;
 	private readonly pass: FullScreenQuad;
 	private readonly renderMaterial: THREE.RawShaderMaterial;
-	private count = 1000;
 
 	constructor(
 		simulationResolution: SimulationResolution,
@@ -177,7 +176,7 @@ export class Agents {
 				-AGENT_LENGTH / 2, AGENT_WIDTH / 2, 0,
 			], 3),
 		);
-		geometry.instanceCount = this.count;
+		geometry.instanceCount = 1000;
 
 		this.mesh = new THREE.Mesh(
 			geometry,
@@ -201,7 +200,6 @@ export class Agents {
 		if (!Number.isInteger(value) || value < 0 || value > TEXTURES_WIDTH ** 2) {
 			throw new RangeError("Agent count exceeds texture capacity or is not a nonnegative integer");
 		}
-		this.count = value;
 		this.mesh.geometry.instanceCount = value;
 	}
 

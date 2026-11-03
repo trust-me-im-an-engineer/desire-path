@@ -1,173 +1,184 @@
 <!doctype html>
 <html lang="ru">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Desire path</title>
+        <title>Desire path</title>
 
-    <link rel="stylesheet" href="./style.css" />
+        <link rel="stylesheet" href="./style.css" />
 
-    <script type="module" src="./src/main.ts"></script>
-  </head>
+        <script type="module" src="./src/main.ts"></script>
+    </head>
 
-  <body>
-    <main>
-      <aside>
-        <fieldset class="preset">
-          <legend>Карты</legend>
-          <select id="select-preset">
-            <option>a</option>
-            <option>bell</option>
-            <option>2</option>
-            <option>5</option>
-          </select>
-        </fieldset>
+    <body>
+        <main>
+            <aside>
+                <fieldset class="preset">
+                    <legend>Карты</legend>
+                    <select id="select-preset">
+                        <option>a</option>
+                        <option>bell</option>
+                        <option>2</option>
+                        <option>5</option>
+                    </select>
+                </fieldset>
 
-        <fieldset class="control">
-          <legend>Настройки симуляции</legend>
-          <div class="field">
-            Агенты
-            <div class="input-pair">
-              <input
-                id="agentCountRange"
-                type="range"
-                min="1"
-                max="100000"
-                value="1000"
-              />
-              <input
-                id="agentCountNumber"
-                type="number"
-                min="1"
-                max="100000"
-                value="1000"
-              />
-            </div>
-          </div>
+                <fieldset class="control">
+                    <legend>Настройки симуляции</legend>
+                    <div class="field">
+                        Агенты
+                        <div class="input-pair">
+                            <input
+                                id="agentCountRange"
+                                type="range"
+                                min="1"
+                                max="100000"
+                                value="1000"
+                            />
+                            <input
+                                id="agentCountNumber"
+                                type="number"
+                                min="1"
+                                max="100000"
+                                value="1000"
+                            />
+                        </div>
+                    </div>
 
-          <div class="field">
-            Скорость агентов
-            <div class="input-pair">
-              <input
-                id="agentSpeedRange"
-                type="range"
-                min="0.25"
-                max="10.0"
-                value="2.0"
-                step="0.25"
-              />
-              <input
-                id="agentSpeedNumber"
-                type="number"
-                min="0.25"
-                max="10.0"
-                value="2.0"
-                step="0.25"
-              />
-            </div>
-          </div>
+                    <div class="field">
+                        Скорость агентов
+                        <div class="input-pair">
+                            <input
+                                id="agentSpeedRange"
+                                type="range"
+                                min="0.25"
+                                max="10.0"
+                                value="2.0"
+                                step="0.25"
+                            />
+                            <input
+                                id="agentSpeedNumber"
+                                type="number"
+                                min="0.25"
+                                max="10.0"
+                                value="2.0"
+                                step="0.25"
+                            />
+                        </div>
+                    </div>
 
-          <div class="field">
-            Сила инерции направления
-            <div class="input-pair">
-              <input
-                id="agentInertiaRange"
-                type="range"
-                min="0"
-                max="8"
-                value="0.6"
-                step="0.1"
-              />
-              <input
-                id="agentInertiaNumber"
-                type="number"
-                min="0"
-                max="8"
-                value="0.6"
-                step="0.1"
-              />
-            </div>
-          </div>
+                    <div class="field">
+                        Сила инерции направления
+                        <div class="input-pair">
+                            <input
+                                id="agentInertiaRange"
+                                type="range"
+                                min="0"
+                                max="8"
+                                value="0.6"
+                                step="0.1"
+                            />
+                            <input
+                                id="agentInertiaNumber"
+                                type="number"
+                                min="0"
+                                max="8"
+                                value="0.6"
+                                step="0.1"
+                            />
+                        </div>
+                    </div>
 
-          <div class="field">
-            Степень штрафа за поворот
-            <div class="input-pair">
-              <input
-                id="agentSteeringExponentRange"
-                type="range"
-                min="0.1"
-                max="8"
-                value="1"
-                step="0.1"
-              />
-              <input
-                id="agentSteeringExponentNumber"
-                type="number"
-                min="0.1"
-                max="8"
-                value="1"
-                step="0.1"
-              />
-            </div>
-          </div>
-        </fieldset>
+                    <div class="field">
+                        Степень штрафа за поворот
+                        <div class="input-pair">
+                            <input
+                                id="agentSteeringExponentRange"
+                                type="range"
+                                min="0.1"
+                                max="8"
+                                value="1"
+                                step="0.1"
+                            />
+                            <input
+                                id="agentSteeringExponentNumber"
+                                type="number"
+                                min="0.1"
+                                max="8"
+                                value="1"
+                                step="0.1"
+                            />
+                        </div>
+                    </div>
+                </fieldset>
 
-        <fieldset class="debug">
-          <legend>Отладка</legend>
-          <label>
-            <input id="showTerrain" type="checkbox" checked />
-            Ландшафт
-          </label>
+                <fieldset class="debug">
+                    <legend>Отладка</legend>
+                    <label>
+                        <input id="showTerrain" type="checkbox" checked />
+                        Ландшафт
+                    </label>
 
-          <label>
-            <input id="showCoarseMap" type="checkbox" />
-            Карта проходимости
-          </label>
+                    <label>
+                        <input id="showCoarseMap" type="checkbox" />
+                        Карта проходимости
+                    </label>
 
-          <fieldset>
-            <legend>Карты навигации</legend>
+                    <fieldset id="navigation-maps">
+                        <legend>Карты навигации</legend>
 
-            <label>
-              <input
-                id="hideNavigationMap"
-                name="navigationMap"
-                value="none"
-                type="radio"
-                checked
-              />
-              скрыть
-            </label>
+                        <label>
+                            <input
+                                name="navigationMap"
+                                value="hide"
+                                type="radio"
+                                checked
+                            />
+                            скрыть
+                        </label>
 
-            <label>
-              <input name="navigationMap" value="0" type="radio" />
-              1
-            </label>
+                        <label>
+                            <input
+                                name="navigationMap"
+                                value="0"
+                                type="radio"
+                            />
+                            1
+                        </label>
 
-            <label>
-              <input name="navigationMap" value="1" type="radio" />
-              2
-            </label>
-          </fieldset>
+                        <label>
+                            <input
+                                name="navigationMap"
+                                value="1"
+                                type="radio"
+                            />
+                            2
+                        </label>
+                    </fieldset>
 
-          <label>
-            <input id="showAgents" type="checkbox" checked />
-            Агенты
-          </label>
+                    <label>
+                        <input id="showAgents" type="checkbox" checked />
+                        Агенты
+                    </label>
 
-          <label>
-            <input id="showDestinations" type="checkbox" checked />
-            Пункты назначения
-          </label>
+                    <label>
+                        <input id="showDestinations" type="checkbox" checked />
+                        Пункты назначения
+                    </label>
 
-          <div class="field">
-            <button id="toggleSimulation" type="button">Пауза</button>
-            <button id="stepSimulation" type="button" disabled>Шаг</button>
-          </div>
-        </fieldset>
-      </aside>
+                    <div class="field">
+                        <button id="playback-toggle" type="button">
+                            Пауза
+                        </button>
+                        <button id="playback-step" type="button" disabled>
+                            Шаг
+                        </button>
+                    </div>
+                </fieldset>
+            </aside>
 
-      <canvas id="simulationCanvas"></canvas>
-    </main>
-  </body>
+            <canvas id="simulationCanvas"></canvas>
+        </main>
+    </body>
 </html>
