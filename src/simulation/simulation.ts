@@ -64,8 +64,13 @@ export class Simulation {
             this.destinations,
             this.navigationMaps.textureArray,
             renderer,
-            4,
         );
+
+        this.terrainMesh.position.z = 1;
+        this.coarseMap.mesh.position.z = 2;
+        this.navigationMaps.mesh.position.z = 3;
+        this.agents.mesh.position.z = 4;
+        this.destinations.group.position.z = 5;
 
         this.group.add(
             this.terrainMesh,

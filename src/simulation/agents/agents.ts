@@ -33,7 +33,6 @@ export class Agents {
         destinations: Destinations,
         navigationMapTextureArray: THREE.DataArrayTexture,
         renderer: THREE.WebGLRenderer,
-        depth: number,
     ) {
         // Initialize static properties texture (seed + per-agent speed multiplier).
         const propertiesArray = new Float32Array(2 * TEXTURES_WIDTH ** 2);
@@ -202,7 +201,6 @@ export class Agents {
         this.mesh.position.set(
             -simulationResolution.native.width / 2,
             -simulationResolution.native.height / 2,
-            depth,
         );
     }
 
