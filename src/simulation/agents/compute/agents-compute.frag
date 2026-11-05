@@ -82,7 +82,7 @@ uint pcgHash(uint inputValue) {
 	return (word >> 22u) ^ word;
 }
 
-// random returns a deterministic pseudo-random value in the range [0.0, 1.0).
+// generateRandom returns a deterministic pseudo-random value in the range [0.0, 1.0).
 float generateRandom(State state, Properties properties) {
 	uint value = floatBitsToUint(properties.seed);
 
@@ -98,7 +98,7 @@ float generateRandom(State state, Properties properties) {
 		(1.0f / 16777216.0f);
 }
 
-// Check whether the next movement segment touches or enters the destination circle.
+// isDestinationReached checks whether the next movement segment touches or enters cell the destination is in.
 bool isDestinationReached(State state, Destination destination, float speed) {
 	vec2 stepVec = vec2(cos(state.direction), sin(state.direction)) * speed;
 	vec2 toDestination = destination.position - state.position;
@@ -141,7 +141,7 @@ Destination chooseNextDestination(Destination currentDestination) {
 	return destination;
 }
 
-// navigationWeight returns weight of given cell in navigation map.
+// getNavigationWeight returns weight of cell in navigation map.
 // Cells out of bounds returned as UNREACHABLE.
 // weight is divided by downscale factor, so it doesn't affect steering.
 float getNavigationWeight(ivec2 cell, int layer) {
