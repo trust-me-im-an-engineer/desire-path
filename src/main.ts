@@ -3,12 +3,14 @@ import * as viewport from "./viewport";
 
 import { Controls } from "./controls";
 import { Simulation } from "./simulation/simulation";
-import { presets, Terrain } from "./terrain/terrain";
+import { loadPreset } from "./terrain/terrain";
 
 const scene = new THREE.Scene();
 
-const canvas = <HTMLCanvasElement>document.getElementById("simulationCanvas");
-const renderer = new THREE.WebGLRenderer({ canvas, alpha: true });
+const renderer = new THREE.WebGLRenderer({
+    canvas: document.getElementById("simulationCanvas") as HTMLCanvasElement,
+    alpha: true,
+});
 
 // World origin point in top left corner of screen
 const camera = new THREE.OrthographicCamera();
@@ -21,42 +23,39 @@ let simulation: Simulation;
 let terrainTexture: THREE.Texture;
 let controls: Controls;
 
-const loadPreset = async function (name: string): Promise<Simulation> {
-    const terrain: Terrain = presets[name];
-
-    terrainTexture = await new THREE.TextureLoader().loadAsync(
-        "assets/" + terrain.url,
-    );
-    terrainTexture.generateMipmaps = false;
-    terrainTexture.colorSpace = THREE.SRGBColorSpace;
-
-    return new Simulation(renderer, terrainTexture, terrain.destinations, 8);
-};
-
 const selectPreset = document.getElementById(
     "select-preset",
 ) as HTMLSelectElement;
-selectPreset.addEventListener("change", async () => {
-    const next = await loadPreset(selectPreset.value);
-    scene.remove(simulation.group);
-    scene.add(next.group);
 
-    const oldSimulation = simulation;
-    const oldTerrainTexture = terrainTexture;
-
-    simulation = next;
-
-    oldTerrainTexture.dispose();
-    oldSimulation.dispose();
-
-    controls.simulation = simulation;
-    controls.apply();
-});
-
-simulation = await loadPreset(selectPreset.value);
+({ terrainTexture, simulation } = await loadPreset(
+    selectPreset.value,
+    renderer,
+));
 scene.add(simulation.group);
 
 controls = new Controls(simulation);
+
+selectPreset.addEventListener("change", async () => {
+    const oldSimulation = simulation;
+    const oldTerrainTexture = terrainTexture;
+
+    ({ terrainTexture, simulation } = await loadPreset(
+        selectPreset.value,
+        renderer,
+    ));
+
+    // update scene with new simulation
+    scene.remove(oldSimulation.group);
+    scene.add(simulation.group);
+
+    // update controls with new simulation
+    controls.simulation = simulation;
+    controls.apply();
+
+    // dispose old simulation
+    oldTerrainTexture.dispose();
+    oldSimulation.dispose();
+});
 
 function frameRequestCallback() {
     // Resize camera and renderer according to current canvas size
