@@ -12,12 +12,8 @@ const renderer = new THREE.WebGLRenderer({
     alpha: true,
 });
 
-// World origin point in top left corner of screen
 const camera = new THREE.OrthographicCamera();
-camera.left = 0;
-camera.top = 0;
 camera.position.z = 100;
-camera.updateProjectionMatrix();
 
 let simulation: Simulation;
 let terrainTexture: THREE.Texture;

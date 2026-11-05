@@ -60,7 +60,7 @@ export class CoarseMap {
 
         this.mesh.position.set(
             simulationResolution.native.width / 2,
-            -simulationResolution.native.height / 2,
+            simulationResolution.native.height / 2,
             2,
         );
     }

@@ -20,11 +20,7 @@ export class Destinations {
             );
             destinationMesh.position.set(
                 destination.x - (destination.x % cellSize.x) + cellSize.x / 2,
-                -(
-                    destination.y -
-                    (destination.y % cellSize.y) +
-                    cellSize.y / 2
-                ),
+                destination.y - (destination.y % cellSize.y) + cellSize.y / 2,
                 5,
             );
             this.group.add(destinationMesh);

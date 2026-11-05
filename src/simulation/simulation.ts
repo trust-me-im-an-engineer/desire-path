@@ -42,7 +42,7 @@ export class Simulation {
         );
         this.terrainMesh.position.set(
             this.resolution.native.width / 2,
-            -this.resolution.native.height / 2,
+            this.resolution.native.height / 2,
         );
 
         this.destinations = new Destinations(

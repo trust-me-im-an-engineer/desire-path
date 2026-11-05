@@ -120,7 +120,6 @@ bool isDestinationReached(State state, Destination destination, float speed) {
 
 // chooseNextDestination chooses a new destination randomly according to weights.
 Destination chooseNextDestination(Destination currentDestination) {
-	int i = 0;
 	Destination destination;
 	float collectedWeight = 0.0f;
 
@@ -163,10 +162,6 @@ float angleDiff(float a, float b) {
 // steer sets agent's direction.
 void steer(inout State state) {
 	ivec2 downscaledPosition = ivec2(state.position / uDownscaleFactor);
-	ivec2 navigationMapSize = textureSize(uNavigationMapTextureArray, 0).xy;
-
-	// Agent Y is down-positive, while texture Y is up-positive.
-	ivec2 navigationPosition = ivec2(downscaledPosition.x, navigationMapSize.y - 1 - downscaledPosition.y);
 
 	ivec2 bestDirectionVec = ivec2(0);
 	float smallestCost = UNREACHABLE;
@@ -177,7 +172,7 @@ void steer(inout State state) {
 				continue;
 			}
 
-			float navigationCost = getNavigationWeight(navigationPosition + ivec2(x, -y), state.destinationIndex);
+			float navigationCost = getNavigationWeight(downscaledPosition + ivec2(x, y), state.destinationIndex);
 			if (navigationCost >= UNREACHABLE) {
 				continue;
 			}

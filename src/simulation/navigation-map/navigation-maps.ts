@@ -41,19 +41,20 @@ export class NavigationMaps {
             simulationResolution.downscaled.width *
             simulationResolution.downscaled.height;
 
-        const coarseMapArray = coarseMap.toArray(renderer);
         const data = new Float32Array(mapSize * destinations.length);
         for (const [i, destination] of destinations.entries()) {
-            const destinationDownscaledPosition = new THREE.Vector2(
-                Math.floor(destination.x / simulationResolution.cellSize.x),
-                simulationResolution.downscaled.height -
-                    1 -
-                    Math.floor(destination.y / simulationResolution.cellSize.y),
+            const destinationPosition = new THREE.Vector2(
+                destination.x,
+                destination.y,
             );
 
+            // downscale position
+            destinationPosition.divide(simulationResolution.cellSize);
+            destinationPosition.floor();
+
             const navigationMap = dijkstra(
-                destinationDownscaledPosition,
-                coarseMapArray,
+                destinationPosition,
+                coarseMap.toArray(renderer),
                 simulationResolution,
             );
 
@@ -71,6 +72,7 @@ export class NavigationMaps {
 
             data.set(navigationMap, i * mapSize);
         }
+
         this.textureArray = new THREE.DataArrayTexture(
             data,
             simulationResolution.downscaled.width,
@@ -133,7 +135,7 @@ export class NavigationMaps {
         );
         this.mesh.position.set(
             simulationResolution.native.width / 2,
-            -simulationResolution.native.height / 2,
+            simulationResolution.native.height / 2,
             3,
         );
 

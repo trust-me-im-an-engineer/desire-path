@@ -8,6 +8,7 @@ export function resize(
     simulationResolution: SimulationResolution,
 ): void {
     const canvas = renderer.domElement;
+
     const renderWidth = Math.floor(
         canvas.clientWidth * window.devicePixelRatio,
     );
@@ -26,17 +27,19 @@ export function resize(
     const canvasAspect = canvas.clientWidth / canvas.clientHeight;
     const textureAspect =
         simulationResolution.native.width / simulationResolution.native.height;
+
     let cameraRight = simulationResolution.native.width;
-    let cameraBottom = simulationResolution.native.width / canvasAspect;
+    let cameraTop = simulationResolution.native.width / canvasAspect;
+
     if (canvasAspect > textureAspect) {
         cameraRight = simulationResolution.native.height * canvasAspect;
-        cameraBottom = simulationResolution.native.height;
+        cameraTop = simulationResolution.native.height;
     }
 
     // Simulation dimensions can change independently of the canvas size.
-    if (camera.right !== cameraRight || camera.bottom !== -cameraBottom) {
+    if (camera.right !== cameraRight || camera.top !== cameraTop) {
         camera.right = cameraRight;
-        camera.bottom = -cameraBottom;
+        camera.top = cameraTop;
         camera.updateProjectionMatrix();
     }
 }
