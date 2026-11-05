@@ -60,14 +60,14 @@ export class Controls {
     }
 }
 
-type onInputPair = (value: number) => void;
+type OnInputPair = (value: number) => void;
 
 class InputPair {
     private range: HTMLInputElement;
     private number: HTMLInputElement;
-    private set: onInputPair;
+    private set: OnInputPair;
 
-    constructor(idPrefix: string, f: onInputPair) {
+    constructor(idPrefix: string, onInputPair: OnInputPair) {
         this.range = document.getElementById(
             idPrefix + "Range",
         ) as HTMLInputElement;
@@ -76,7 +76,7 @@ class InputPair {
             idPrefix + "Number",
         ) as HTMLInputElement;
 
-        this.set = f;
+        this.set = onInputPair;
 
         this.range.addEventListener("input", () => {
             this.number.value = this.range.value;
@@ -101,15 +101,15 @@ class InputPair {
     }
 }
 
-type onVisibilityToggle = (checked: boolean) => void;
+type OnVisibilityToggle = (checked: boolean) => void;
 
 class VisibilityToggle {
     private toggle: HTMLInputElement;
-    private set: onVisibilityToggle;
+    private set: OnVisibilityToggle;
 
-    constructor(id: string, f: onVisibilityToggle) {
+    constructor(id: string, onVisibilityToggle: OnVisibilityToggle) {
         this.toggle = document.getElementById(id) as HTMLInputElement;
-        this.set = f;
+        this.set = onVisibilityToggle;
 
         this.toggle.addEventListener("change", () => {
             this.apply();
@@ -123,14 +123,14 @@ class VisibilityToggle {
 
 class NavigationMapInput {
     private fieldSet: HTMLFieldSetElement;
-    private getter: () => NavigationMaps;
+    private get: () => NavigationMaps;
 
     constructor(getNavigationMaps: () => NavigationMaps) {
         this.fieldSet = document.getElementById(
             "navigation-maps",
         ) as HTMLFieldSetElement;
 
-        this.getter = getNavigationMaps;
+        this.get = getNavigationMaps;
 
         this.fieldSet.addEventListener("change", (event) => {
             const target = event.target;
@@ -152,7 +152,7 @@ class NavigationMapInput {
     }
 
     private set(target: HTMLInputElement) {
-        const navigationMaps = this.getter();
+        const navigationMaps = this.get();
 
         if (target.value === "hide") {
             navigationMaps.mesh.visible = false;
@@ -168,7 +168,7 @@ class PlaybackInput {
     private step: HTMLButtonElement;
     private get: () => Playback;
 
-    constructor(f: () => Playback) {
+    constructor(getPlayback: () => Playback) {
         this.toggle = document.getElementById(
             "playback-toggle",
         ) as HTMLButtonElement;
@@ -177,7 +177,7 @@ class PlaybackInput {
             "playback-step",
         ) as HTMLButtonElement;
 
-        this.get = f;
+        this.get = getPlayback;
 
         this.toggle.addEventListener("click", () => {
             const playback = this.get();
