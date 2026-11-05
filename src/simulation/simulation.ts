@@ -40,14 +40,11 @@ export class Simulation {
             ),
             new THREE.MeshBasicMaterial({ map: terrainTexture }),
         );
-        this.terrainMesh.position.set(
-            this.resolution.native.width / 2,
-            this.resolution.native.height / 2,
-        );
 
         this.destinations = new Destinations(
             destinations,
             this.resolution.cellSize,
+            this.resolution,
         );
 
         this.coarseMap = new CoarseMap(this.resolution, terrainTexture);

@@ -199,7 +199,11 @@ export class Agents {
         // Disable culling as this mesh is always on screen
         this.mesh.frustumCulled = false;
 
-        this.mesh.position.z = depth;
+        this.mesh.position.set(
+            -simulationResolution.native.width / 2,
+            -simulationResolution.native.height / 2,
+            depth,
+        );
     }
 
     public setSpeed(value: number): void {

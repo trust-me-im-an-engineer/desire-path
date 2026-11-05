@@ -28,18 +28,24 @@ export function resize(
     const textureAspect =
         simulationResolution.native.width / simulationResolution.native.height;
 
-    let cameraRight = simulationResolution.native.width;
-    let cameraTop = simulationResolution.native.width / canvasAspect;
+    let cameraWidth = simulationResolution.native.width;
+    let cameraHeight = simulationResolution.native.width / canvasAspect;
 
     if (canvasAspect > textureAspect) {
-        cameraRight = simulationResolution.native.height * canvasAspect;
-        cameraTop = simulationResolution.native.height;
+        cameraWidth = simulationResolution.native.height * canvasAspect;
+        cameraHeight = simulationResolution.native.height;
     }
 
-    // Simulation dimensions can change independently of the canvas size.
-    if (camera.right !== cameraRight || camera.top !== cameraTop) {
-        camera.right = cameraRight;
-        camera.top = cameraTop;
+    if (
+        camera.right !== cameraWidth / 2 ||
+        camera.left !== cameraWidth / 2 ||
+        camera.top !== cameraHeight / 2 ||
+        camera.bottom !== cameraHeight / 2
+    ) {
+        camera.right = cameraWidth / 2;
+        camera.left = -cameraWidth / 2;
+        camera.top = cameraHeight / 2;
+        camera.bottom = -cameraHeight / 2;
         camera.updateProjectionMatrix();
     }
 }

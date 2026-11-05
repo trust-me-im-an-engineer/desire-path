@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { Destination } from "../../terrain/terrain";
+import { SimulationResolution } from "../resolution";
 
 export const MAX_COUNT = 32;
 
@@ -11,8 +12,15 @@ export class Destinations {
     constructor(
         public items: Destination[],
         cellSize: THREE.Vector2,
+        resolution: SimulationResolution,
     ) {
         this.group = new THREE.Group();
+        this.group.position.set(
+            -resolution.native.width / 2,
+            -resolution.native.height / 2,
+            0,
+        );
+
         for (const destination of items) {
             const destinationMesh = new THREE.Mesh(
                 new THREE.CircleGeometry(destination.weight),

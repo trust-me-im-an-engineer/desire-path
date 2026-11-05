@@ -57,12 +57,7 @@ export class CoarseMap {
             ),
             new THREE.MeshBasicMaterial({ map: this.computeTarget.texture }),
         );
-
-        this.mesh.position.set(
-            simulationResolution.native.width / 2,
-            simulationResolution.native.height / 2,
-            2,
-        );
+        this.mesh.position.z = 2;
     }
 
     compute(renderer: THREE.WebGLRenderer): void {

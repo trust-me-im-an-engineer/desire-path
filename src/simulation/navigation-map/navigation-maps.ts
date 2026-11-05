@@ -133,11 +133,7 @@ export class NavigationMaps {
             ),
             this.renderMaterial,
         );
-        this.mesh.position.set(
-            simulationResolution.native.width / 2,
-            simulationResolution.native.height / 2,
-            3,
-        );
+        this.mesh.position.z = 3;
 
         this.destinationCount = destinations.length;
     }
