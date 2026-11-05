@@ -3,89 +3,93 @@ import { FullScreenQuad } from "three/addons/postprocessing/Pass.js";
 
 import type { SimulationResolution } from "../resolution";
 
-import fragmentShader from './coarse-map.frag?raw';
-import vertexShader from './coarse-map.vert?raw';
+import fragmentShader from "./coarse-map.frag?raw";
+import vertexShader from "./coarse-map.vert?raw";
 
 export class CoarseMap {
-	public readonly mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial>;
-	public readonly computeTarget: THREE.WebGLRenderTarget;
+    public readonly mesh: THREE.Mesh<
+        THREE.PlaneGeometry,
+        THREE.MeshBasicMaterial
+    >;
+    public readonly computeTarget: THREE.WebGLRenderTarget;
 
-	private readonly pass: FullScreenQuad;
+    private readonly pass: FullScreenQuad;
 
-	constructor(
-		private simulationResolution: SimulationResolution,
-		terrainTexture: THREE.Texture,
-	) {
-		const coarseMapShaderMaterial = new THREE.RawShaderMaterial({
-			glslVersion: THREE.GLSL3,
+    constructor(
+        private simulationResolution: SimulationResolution,
+        terrainTexture: THREE.Texture,
+    ) {
+        const coarseMapShaderMaterial = new THREE.RawShaderMaterial({
+            glslVersion: THREE.GLSL3,
 
-			uniforms: {
-				uTerrainTexture: { value: terrainTexture },
-				uCellSize: { value: simulationResolution.cellSize }
-				// uWearMap: { value: wearTexture },
-				// uDestinations: { value: destinations },
-			},
+            uniforms: {
+                uTerrainTexture: { value: terrainTexture },
+                uCellSize: { value: simulationResolution.cellSize },
+                // uWearMap: { value: wearTexture },
+                // uDestinations: { value: destinations },
+            },
 
-			vertexShader: vertexShader,
-			fragmentShader: fragmentShader,
-		});
+            vertexShader: vertexShader,
+            fragmentShader: fragmentShader,
+        });
 
-		this.computeTarget = new THREE.WebGLRenderTarget(
-			simulationResolution.downscaled.width,
-			simulationResolution.downscaled.height,
-			{
-				format: THREE.RedFormat,
-				type: THREE.FloatType,
-				minFilter: THREE.NearestFilter,
-				magFilter: THREE.NearestFilter,
-				depthBuffer: false,
-				stencilBuffer: false,
-				generateMipmaps: false,
-				colorSpace: THREE.NoColorSpace,
-			},
-		);
+        this.computeTarget = new THREE.WebGLRenderTarget(
+            simulationResolution.downscaled.width,
+            simulationResolution.downscaled.height,
+            {
+                format: THREE.RedFormat,
+                type: THREE.FloatType,
+                minFilter: THREE.NearestFilter,
+                magFilter: THREE.NearestFilter,
+                depthBuffer: false,
+                stencilBuffer: false,
+                generateMipmaps: false,
+                colorSpace: THREE.NoColorSpace,
+            },
+        );
 
-		this.pass = new FullScreenQuad(coarseMapShaderMaterial);
+        this.pass = new FullScreenQuad(coarseMapShaderMaterial);
 
-		this.mesh = new THREE.Mesh(
-			new THREE.PlaneGeometry(
-				simulationResolution.native.width,
-				simulationResolution.native.height,
-			),
-			new THREE.MeshBasicMaterial({ map: this.computeTarget.texture }),
-		);
+        this.mesh = new THREE.Mesh(
+            new THREE.PlaneGeometry(
+                simulationResolution.native.width,
+                simulationResolution.native.height,
+            ),
+            new THREE.MeshBasicMaterial({ map: this.computeTarget.texture }),
+        );
 
-		this.mesh.position.set(
-			simulationResolution.native.width / 2,
-			-simulationResolution.native.height / 2,
-			2,
-		);
-	}
+        this.mesh.position.set(
+            simulationResolution.native.width / 2,
+            -simulationResolution.native.height / 2,
+            2,
+        );
+    }
 
-	compute(renderer: THREE.WebGLRenderer): void {
-		renderer.setRenderTarget(this.computeTarget);
-		this.pass.render(renderer);
-	}
+    compute(renderer: THREE.WebGLRenderer): void {
+        renderer.setRenderTarget(this.computeTarget);
+        this.pass.render(renderer);
+    }
 
-	toArray(renderer: THREE.WebGLRenderer): Float32Array {
-		const array = new Float32Array(
-			this.simulationResolution.downscaled.width * this.simulationResolution.downscaled.height,
-		);
-		renderer.readRenderTargetPixels(
-			this.computeTarget,
-			0,
-			0,
-			this.simulationResolution.downscaled.width,
-			this.simulationResolution.downscaled.height,
-			array,
-		);
-		return array;
-	}
+    toArray(renderer: THREE.WebGLRenderer): Float32Array {
+        const array = new Float32Array(
+            this.simulationResolution.downscaled.width *
+                this.simulationResolution.downscaled.height,
+        );
+        renderer.readRenderTargetPixels(
+            this.computeTarget,
+            0,
+            0,
+            this.simulationResolution.downscaled.width,
+            this.simulationResolution.downscaled.height,
+            array,
+        );
+        return array;
+    }
 
-	dispose(): void {
-		this.mesh.geometry.dispose();
-		this.mesh.material.dispose();
-		this.computeTarget.dispose();
-		this.pass.material.dispose();
-	}
+    dispose(): void {
+        this.mesh.geometry.dispose();
+        this.mesh.material.dispose();
+        this.computeTarget.dispose();
+        this.pass.material.dispose();
+    }
 }

@@ -4,233 +4,256 @@ import { FullScreenQuad } from "three/addons/postprocessing/Pass.js";
 import { Destinations } from "../destinations/destinations";
 import type { SimulationResolution } from "../resolution";
 
-import computeFragmentShader from './compute/agents-compute.frag?raw';
-import computeVertexShader from './compute/agents-compute.vert?raw';
-import renderFragmentShader from './render/agents-render.frag?raw';
-import renderVertexShader from './render/agents-render.vert?raw';
+import computeFragmentShader from "./compute/agents-compute.frag?raw";
+import computeVertexShader from "./compute/agents-compute.vert?raw";
+import renderFragmentShader from "./render/agents-render.frag?raw";
+import renderVertexShader from "./render/agents-render.vert?raw";
 
 const TEXTURES_WIDTH = 1000;
 const AGENT_LENGTH = 15;
 const AGENT_WIDTH = 10;
 
 export class Agents {
-	public readonly mesh: THREE.Mesh<THREE.InstancedBufferGeometry, THREE.RawShaderMaterial>;
+    public readonly mesh: THREE.Mesh<
+        THREE.InstancedBufferGeometry,
+        THREE.RawShaderMaterial
+    >;
 
-	private computeTargetRead: THREE.WebGLRenderTarget;
-	private computeTargetWrite: THREE.WebGLRenderTarget;
-	private readonly propertiesDataTexture: THREE.DataTexture;
-	private readonly computeMaterial: THREE.RawShaderMaterial;
-	private readonly pass: FullScreenQuad;
-	private readonly renderMaterial: THREE.RawShaderMaterial;
+    private computeTargetRead: THREE.WebGLRenderTarget;
+    private computeTargetWrite: THREE.WebGLRenderTarget;
+    private readonly propertiesDataTexture: THREE.DataTexture;
+    private readonly computeMaterial: THREE.RawShaderMaterial;
+    private readonly pass: FullScreenQuad;
+    private readonly renderMaterial: THREE.RawShaderMaterial;
 
-	constructor(
-		simulationResolution: SimulationResolution,
-		terrainTexture: THREE.Texture,
-		coarseMap: THREE.Texture,
-		destinations: Destinations,
-		navigationMapTextureArray: THREE.DataArrayTexture,
-		renderer: THREE.WebGLRenderer,
-		depth: number,
-	) {
-		// Initialize static properties texture (seed + per-agent speed multiplier).
-		const propertiesArray = new Float32Array(2 * TEXTURES_WIDTH ** 2);
-		for (let i = 0; i < propertiesArray.length; i += 2) {
-			propertiesArray[i] = Math.random();
-			propertiesArray[i + 1] = 0.5 + Math.random();
-		}
-		this.propertiesDataTexture = new THREE.DataTexture(
-			propertiesArray,
-			TEXTURES_WIDTH,
-			TEXTURES_WIDTH,
-			THREE.RGFormat,
-			THREE.FloatType,
-		);
-		this.propertiesDataTexture.minFilter = THREE.NearestFilter;
-		this.propertiesDataTexture.magFilter = THREE.NearestFilter;
-		this.propertiesDataTexture.generateMipmaps = false;
-		this.propertiesDataTexture.colorSpace = THREE.NoColorSpace;
-		this.propertiesDataTexture.needsUpdate = true;
+    constructor(
+        simulationResolution: SimulationResolution,
+        terrainTexture: THREE.Texture,
+        coarseMap: THREE.Texture,
+        destinations: Destinations,
+        navigationMapTextureArray: THREE.DataArrayTexture,
+        renderer: THREE.WebGLRenderer,
+        depth: number,
+    ) {
+        // Initialize static properties texture (seed + per-agent speed multiplier).
+        const propertiesArray = new Float32Array(2 * TEXTURES_WIDTH ** 2);
+        for (let i = 0; i < propertiesArray.length; i += 2) {
+            propertiesArray[i] = Math.random();
+            propertiesArray[i + 1] = 0.5 + Math.random();
+        }
+        this.propertiesDataTexture = new THREE.DataTexture(
+            propertiesArray,
+            TEXTURES_WIDTH,
+            TEXTURES_WIDTH,
+            THREE.RGFormat,
+            THREE.FloatType,
+        );
+        this.propertiesDataTexture.minFilter = THREE.NearestFilter;
+        this.propertiesDataTexture.magFilter = THREE.NearestFilter;
+        this.propertiesDataTexture.generateMipmaps = false;
+        this.propertiesDataTexture.colorSpace = THREE.NoColorSpace;
+        this.propertiesDataTexture.needsUpdate = true;
 
-		// Choose each starting destination in proportion to its weight.
-		const weightedDestinationIndices: number[] = [];
-		const cumulativeDestinationWeights: number[] = [];
-		let totalDestinationWeight = 0;
-		for (let i = 0; i < destinations.items.length; i++) {
-			const destination = destinations.items[i];
-			totalDestinationWeight += destination.weight;
-			weightedDestinationIndices.push(i);
-			cumulativeDestinationWeights.push(totalDestinationWeight);
-		}
+        // Choose each starting destination in proportion to its weight.
+        const weightedDestinationIndices: number[] = [];
+        const cumulativeDestinationWeights: number[] = [];
+        let totalDestinationWeight = 0;
+        for (let i = 0; i < destinations.items.length; i++) {
+            const destination = destinations.items[i];
+            totalDestinationWeight += destination.weight;
+            weightedDestinationIndices.push(i);
+            cumulativeDestinationWeights.push(totalDestinationWeight);
+        }
 
-		// Initialize state texture with position.xy, direction and destination index.
-		const stateTextureData = new Float32Array(4 * TEXTURES_WIDTH ** 2);
-		for (let i = 0; i < stateTextureData.length; i += 4) {
-			const selectedWeight = Math.random() * totalDestinationWeight;
-			let weightedIndex = 0;
-			while (
-				weightedIndex < cumulativeDestinationWeights.length - 1 &&
-				selectedWeight >= cumulativeDestinationWeights[weightedIndex]
-			) {
-				weightedIndex++;
-			}
-			const destinationIndex = weightedDestinationIndices[weightedIndex];
+        // Initialize state texture with position.xy, direction and destination index.
+        const stateTextureData = new Float32Array(4 * TEXTURES_WIDTH ** 2);
+        for (let i = 0; i < stateTextureData.length; i += 4) {
+            const selectedWeight = Math.random() * totalDestinationWeight;
+            let weightedIndex = 0;
+            while (
+                weightedIndex < cumulativeDestinationWeights.length - 1 &&
+                selectedWeight >= cumulativeDestinationWeights[weightedIndex]
+            ) {
+                weightedIndex++;
+            }
+            const destinationIndex = weightedDestinationIndices[weightedIndex];
 
-			stateTextureData[i] = destinations.items[destinationIndex].x;
-			stateTextureData[i + 1] = destinations.items[destinationIndex].y;
-			stateTextureData[i + 2] = 0.0;
-			stateTextureData[i + 3] = destinationIndex;
-		}
-		const stateTexture = new THREE.DataTexture(
-			stateTextureData,
-			TEXTURES_WIDTH,
-			TEXTURES_WIDTH,
-			THREE.RGBAFormat,
-			THREE.FloatType,
-		);
-		stateTexture.minFilter = THREE.NearestFilter;
-		stateTexture.magFilter = THREE.NearestFilter;
-		stateTexture.generateMipmaps = false;
-		stateTexture.colorSpace = THREE.NoColorSpace;
-		stateTexture.needsUpdate = true;
+            stateTextureData[i] = destinations.items[destinationIndex].x;
+            stateTextureData[i + 1] = destinations.items[destinationIndex].y;
+            stateTextureData[i + 2] = 0.0;
+            stateTextureData[i + 3] = destinationIndex;
+        }
+        const stateTexture = new THREE.DataTexture(
+            stateTextureData,
+            TEXTURES_WIDTH,
+            TEXTURES_WIDTH,
+            THREE.RGBAFormat,
+            THREE.FloatType,
+        );
+        stateTexture.minFilter = THREE.NearestFilter;
+        stateTexture.magFilter = THREE.NearestFilter;
+        stateTexture.generateMipmaps = false;
+        stateTexture.colorSpace = THREE.NoColorSpace;
+        stateTexture.needsUpdate = true;
 
-		this.computeTargetRead = new THREE.WebGLRenderTarget(
-			TEXTURES_WIDTH,
-			TEXTURES_WIDTH,
-			{
-				format: THREE.RGBAFormat,
-				type: THREE.FloatType,
-				internalFormat: "RGBA32F",
+        this.computeTargetRead = new THREE.WebGLRenderTarget(
+            TEXTURES_WIDTH,
+            TEXTURES_WIDTH,
+            {
+                format: THREE.RGBAFormat,
+                type: THREE.FloatType,
+                internalFormat: "RGBA32F",
 
-				minFilter: THREE.NearestFilter,
-				magFilter: THREE.NearestFilter,
+                minFilter: THREE.NearestFilter,
+                magFilter: THREE.NearestFilter,
 
-				depthBuffer: false,
-				stencilBuffer: false,
-				generateMipmaps: false,
-				colorSpace: THREE.NoColorSpace,
-			},
-		);
+                depthBuffer: false,
+                stencilBuffer: false,
+                generateMipmaps: false,
+                colorSpace: THREE.NoColorSpace,
+            },
+        );
 
-		// Initialization needed before copying data texture to render target
-		renderer.initRenderTarget(this.computeTargetRead);
-		renderer.copyTextureToTexture(
-			stateTexture,
-			this.computeTargetRead.texture,
-		);
-		stateTexture.dispose();
+        // Initialization needed before copying data texture to render target
+        renderer.initRenderTarget(this.computeTargetRead);
+        renderer.copyTextureToTexture(
+            stateTexture,
+            this.computeTargetRead.texture,
+        );
+        stateTexture.dispose();
 
-		// Clone compute target for ping-pong simulation
-		this.computeTargetWrite = this.computeTargetRead.clone();
+        // Clone compute target for ping-pong simulation
+        this.computeTargetWrite = this.computeTargetRead.clone();
 
-		this.computeMaterial = new THREE.RawShaderMaterial({
-			glslVersion: THREE.GLSL3,
+        this.computeMaterial = new THREE.RawShaderMaterial({
+            glslVersion: THREE.GLSL3,
 
-			uniforms: {
-				uPreviousStateTexture: { value: this.computeTargetRead.texture },
-				uPropertiesTexture: { value: this.propertiesDataTexture },
-				uAgentSpeed: { value: 2 },
+            uniforms: {
+                uPreviousStateTexture: {
+                    value: this.computeTargetRead.texture,
+                },
+                uPropertiesTexture: { value: this.propertiesDataTexture },
+                uAgentSpeed: { value: 2 },
 
-				uDestinationsTexture: { value: destinations.texture },
-				uDestinationsTotalWeight: { value: destinations.totalWeight },
+                uDestinationsTexture: { value: destinations.texture },
+                uDestinationsTotalWeight: { value: destinations.totalWeight },
 
-				uSimulationResolution: { value: simulationResolution.native },
-				uDownscaleFactor: { value: simulationResolution.cellSize },
-				uTerrainTexture: { value: terrainTexture },
-				uNavigationMapTextureArray: { value: navigationMapTextureArray },
-				uSteeringStrength: { value: 0 },
-				uSteeringExponent: { value: 1 },
-			},
+                uSimulationResolution: { value: simulationResolution.native },
+                uDownscaleFactor: { value: simulationResolution.cellSize },
+                uTerrainTexture: { value: terrainTexture },
+                uNavigationMapTextureArray: {
+                    value: navigationMapTextureArray,
+                },
+                uSteeringStrength: { value: 0 },
+                uSteeringExponent: { value: 1 },
+            },
 
-			vertexShader: computeVertexShader,
-			fragmentShader: computeFragmentShader,
+            vertexShader: computeVertexShader,
+            fragmentShader: computeFragmentShader,
 
-			depthWrite: false,
-			depthTest: false,
-		})
+            depthWrite: false,
+            depthTest: false,
+        });
 
-		// Pass is a full screen quad for rendering subsequent passes for simulation
-		this.pass = new FullScreenQuad(this.computeMaterial);
+        // Pass is a full screen quad for rendering subsequent passes for simulation
+        this.pass = new FullScreenQuad(this.computeMaterial);
 
-		this.renderMaterial = new THREE.RawShaderMaterial({
-			glslVersion: THREE.GLSL3,
+        this.renderMaterial = new THREE.RawShaderMaterial({
+            glslVersion: THREE.GLSL3,
 
-			uniforms: {
-				uStateTexture: {
-					value: this.computeTargetRead.texture,
-				},
-			},
+            uniforms: {
+                uStateTexture: {
+                    value: this.computeTargetRead.texture,
+                },
+            },
 
-			vertexShader: renderVertexShader,
-			fragmentShader: renderFragmentShader,
+            vertexShader: renderVertexShader,
+            fragmentShader: renderFragmentShader,
 
-			transparent: true,
-			depthWrite: false,
-		})
+            transparent: true,
+            depthWrite: false,
+        });
 
-		const geometry = new THREE.InstancedBufferGeometry();
-		geometry.setAttribute(
-			"position",
-			new THREE.Float32BufferAttribute([
-				-AGENT_LENGTH / 2, -AGENT_WIDTH / 2, 0,
-				AGENT_LENGTH / 2, 0, 0,
-				-AGENT_LENGTH / 2, AGENT_WIDTH / 2, 0,
-			], 3),
-		);
-		geometry.instanceCount = 1000;
+        const geometry = new THREE.InstancedBufferGeometry();
+        geometry.setAttribute(
+            "position",
+            new THREE.Float32BufferAttribute(
+                [
+                    -AGENT_LENGTH / 2,
+                    -AGENT_WIDTH / 2,
+                    0,
+                    AGENT_LENGTH / 2,
+                    0,
+                    0,
+                    -AGENT_LENGTH / 2,
+                    AGENT_WIDTH / 2,
+                    0,
+                ],
+                3,
+            ),
+        );
+        geometry.instanceCount = 1000;
 
-		this.mesh = new THREE.Mesh(
-			geometry,
-			this.renderMaterial,
-		);
+        this.mesh = new THREE.Mesh(geometry, this.renderMaterial);
 
-		// Disable culling as this mesh is always on screen
-		this.mesh.frustumCulled = false;
+        // Disable culling as this mesh is always on screen
+        this.mesh.frustumCulled = false;
 
-		this.mesh.position.z = depth;
-	}
+        this.mesh.position.z = depth;
+    }
 
-	public setSpeed(value: number): void {
-		if (!Number.isFinite(value) || value < 0) {
-			throw new RangeError("Agent speed must be finite and nonnegative");
-		}
-		this.computeMaterial.uniforms.uAgentSpeed.value = value;
-	}
+    public setSpeed(value: number): void {
+        if (!Number.isFinite(value) || value < 0) {
+            throw new RangeError("Agent speed must be finite and nonnegative");
+        }
+        this.computeMaterial.uniforms.uAgentSpeed.value = value;
+    }
 
-	public setCount(value: number): void {
-		if (!Number.isInteger(value) || value < 0 || value > TEXTURES_WIDTH ** 2) {
-			throw new RangeError("Agent count exceeds texture capacity or is not a nonnegative integer");
-		}
-		this.mesh.geometry.instanceCount = value;
-	}
+    public setCount(value: number): void {
+        if (
+            !Number.isInteger(value) ||
+            value < 0 ||
+            value > TEXTURES_WIDTH ** 2
+        ) {
+            throw new RangeError(
+                "Agent count exceeds texture capacity or is not a nonnegative integer",
+            );
+        }
+        this.mesh.geometry.instanceCount = value;
+    }
 
-	public setSteeringStrength(value: number): void {
-		this.computeMaterial.uniforms.uSteeringStrength.value = value;
-	}
+    public setSteeringStrength(value: number): void {
+        this.computeMaterial.uniforms.uSteeringStrength.value = value;
+    }
 
-	public setSteeringExponent(value: number): void {
-		this.computeMaterial.uniforms.uSteeringExponent.value = value;
-	}
+    public setSteeringExponent(value: number): void {
+        this.computeMaterial.uniforms.uSteeringExponent.value = value;
+    }
 
-	public compute(renderer: THREE.WebGLRenderer): void {
-		renderer.setRenderTarget(this.computeTargetWrite);
-		this.pass.render(renderer);
+    public compute(renderer: THREE.WebGLRenderer): void {
+        renderer.setRenderTarget(this.computeTargetWrite);
+        this.pass.render(renderer);
 
-		// Current output becomes next frame's input
-		[this.computeTargetRead, this.computeTargetWrite] = [this.computeTargetWrite, this.computeTargetRead];
+        // Current output becomes next frame's input
+        [this.computeTargetRead, this.computeTargetWrite] = [
+            this.computeTargetWrite,
+            this.computeTargetRead,
+        ];
 
-		this.computeMaterial.uniforms.uPreviousStateTexture.value = this.computeTargetRead.texture;
+        this.computeMaterial.uniforms.uPreviousStateTexture.value =
+            this.computeTargetRead.texture;
 
-		this.renderMaterial.uniforms.uStateTexture.value =
-			this.computeTargetRead.texture;
-	}
+        this.renderMaterial.uniforms.uStateTexture.value =
+            this.computeTargetRead.texture;
+    }
 
-	dispose(): void {
-		this.computeTargetRead.dispose();
-		this.computeTargetWrite.dispose();
+    dispose(): void {
+        this.computeTargetRead.dispose();
+        this.computeTargetWrite.dispose();
 
-		this.propertiesDataTexture.dispose();
-		this.computeMaterial.dispose();
-		this.renderMaterial.dispose();
-		this.mesh.geometry.dispose();
-	}
+        this.propertiesDataTexture.dispose();
+        this.computeMaterial.dispose();
+        this.renderMaterial.dispose();
+        this.mesh.geometry.dispose();
+    }
 }
